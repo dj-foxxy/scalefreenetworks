@@ -2,12 +2,16 @@
 
 #include <argtable2.h>
 
-#define SFN_PROG_NAEM "sfn"
+#define SFN_PROG_NAME "sfn"
 
 int main(int const argc, char **argv)
 {
-	struct arg_int *init_num_nodes = arg_int1("n", NULL, "<n>",
+	struct arg_int *init_num_nodes = arg_intn("n", NULL, "<n>", 0, 1,
 			"Initial number of nodes.");
+    if (init_num_nodes != NULL)
+    {
+        init_num_nodes->ival[0] = 1;
+    }
 	struct arg_end *end = arg_end(1);
 	void *arg_table[] = { init_num_nodes, end };
 
@@ -24,7 +28,7 @@ int main(int const argc, char **argv)
 
 	if (num_errors > 0)
 	{
-		arg_print_errors(stdout, end, SFN_PROG_NAEM);
+		arg_print_errors(stdout, end, SFN_PROG_NAME);
 		exit_code = EXIT_SUCCESS;
 		goto exit;
 	}
