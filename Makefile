@@ -10,7 +10,7 @@ V_LDFLAGS= -ldl
 OGL_CFLAGS=-DGL_GLEXT_PROTOTYPES
 OGL_LDFLAGS=-lGL -lglut -lGLU
 
-#compile 
+#compile
 meatball: $(visual_objects)
 	g++ $(LIBFLAGS) $(OGL_CFLAGS) -o bin/meatball $(visual_objects) $(LDFLAGS) $(OGL_LDFLAGS)
 	rm $(visual_objects)
@@ -33,7 +33,7 @@ lib:
 rebuild: clean build
 
 test: build
-	valgrind ./bin/sfn -d bin/sfn.dot -n 10 -m 3 -T 1000 -s 4
+	valgrind ./bin/sfn -d bin/sfn.dot -n 10 -m 3 -T 1000 -s 4 -k 10
 	dot -T png -o bin/sfn.png bin/sfn.dot
 	eog bin/sfn.png
 
