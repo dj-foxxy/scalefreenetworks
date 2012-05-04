@@ -1,0 +1,4 @@
+all:
+
+.PONY: all
+
