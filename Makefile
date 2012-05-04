@@ -1,4 +1,4 @@
-all: build
+all: build test
 
 build: lib
 	make -C src/
@@ -17,5 +17,10 @@ lib:
 
 rebuild: clean build
 
-.PONY: all build clean deep-clean
+test: build
+	valgrind ./bin/sfn -d bin/sfn.dot -n 10 -m 3 -T 1000 -s 4
+	dot -T png -o bin/sfn.png bin/sfn.dot
+	eog bin/sfn.png
+
+.PONY: all build clean deep-clean lib test
 
