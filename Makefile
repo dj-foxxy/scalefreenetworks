@@ -1,4 +1,12 @@
-all:
+all: build
 
-.PONY: all
+build:
+	make -C src/
+
+clean:
+	rm -fr bin/
+
+rebuild: clean build
+
+.PONY: all build clean
 
