@@ -75,7 +75,8 @@ void Display()
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
   
-    gluLookAt(1000, 1000, 1000,
+    gluLookAt(1500,1500,
+	1500,
   	     0, 0, 0,
 	     0.0, 1.0, 0.0);
     RenderGraph(m_graph);
@@ -112,7 +113,7 @@ int main(int argc, char ** argv)
   
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
-  glutInitWindowSize(800, 600);   // Set the initial Window's width and height
+  glutInitWindowSize(1280, 1024);   // Set the initial Window's width and height
   glutInitWindowPosition(50, 50); // Position the initial Window's top-left corner
   glutCreateWindow("Meatballs, Spaghetti and Cheese Sauce");  // Create window with the given title
   glutDisplayFunc(Display); 
