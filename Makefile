@@ -1,4 +1,4 @@
-all: build test meatball
+all: build test
 
 
 visual_sources = src/*.cpp
@@ -10,7 +10,7 @@ V_LDFLAGS= -ldl
 OGL_CFLAGS=-DGL_GLEXT_PROTOTYPES
 OGL_LDFLAGS=-lGL -lglut -lGLU
 
-#compile 
+#compile
 meatball: $(visual_objects)
 	g++ $(LIBFLAGS) $(OGL_CFLAGS) -o bin/meatball $(visual_objects) $(LDFLAGS) $(OGL_LDFLAGS)
 	rm $(visual_objects)

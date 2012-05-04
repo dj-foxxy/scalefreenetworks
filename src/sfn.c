@@ -84,7 +84,7 @@ void sfn_init(
 		{
 			double const p = (double)rand() / (double)RAND_MAX;
 
-			if (p <= link_prob)
+			if (link_prob > p)
 			{
 				sfn->adjacency[i * num_nodes + j] = true;
 				sfn->nodes[i].neighbours[sfn->nodes[i].degree++] =
@@ -94,6 +94,11 @@ void sfn_init(
 			}
 		}
 	}
+}
+
+static void sfn_ba(
+        sfn_t *const sfn)
+{
 }
 
 bool sfn_write_dot_file(sfn_t const *const sfn, char const *const path)
@@ -117,9 +122,9 @@ bool sfn_write_dot_file(sfn_t const *const sfn, char const *const path)
             goto error;
         }
     }
-	for (int i = 0; i < sfn->num_nodes; ++i)
+	for (size_t i = 0; i < sfn->num_nodes; ++i)
 	{
-		for (int j = 0; j < sfn->nodes[i].degree; ++j)
+		for (size_t j = 0; j < sfn->nodes[i].degree; ++j)
 		{
 			if (sfn->nodes[i].neighbours[j]->id > i)
 			{
@@ -162,19 +167,15 @@ int main(
         arg_init_num_nodes->ival[0] = 1;
     }
 
-	struct arg_dbl *arg_init_link_prob = arg_dbln("p", NULL, "<prob>", 0, 1,
+	struct arg_str *arg_init_link_prob = arg_strn("p", NULL, "<prob>", 0, 1,
 			"Initial link probability (0 <= p <= 1).");
 	if (arg_init_link_prob != NULL)
 	{
-		arg_init_link_prob->dval[0] = 0.2;
+		arg_init_link_prob->sval[0] = "0.2";
 	}
 
     struct arg_int *arg_num_links = arg_intn("m", NULL, "<n>", 0, 1,
             "Number of links to each new node (m <= n).");
-    if (arg_num_links != NULL)
-    {
-        arg_num_links->ival[0] = 3;
-    }
 
     struct arg_int *arg_time_steps = arg_intn("T", NULL, "<n>", 0, 1,
             "The number of time steps (T >= 0).");
@@ -207,15 +208,30 @@ int main(
 
 	int const num_errors = arg_parse(argc, argv, arg_table);
 
+    if (num_errors > 0)
+    {
+		arg_print_errors(stdout, end, SFN_PROG_NAME);
+		exit_code = EXIT_FAILURE;
+		goto exit;
+    }
+
     int const init_num_nodes = arg_init_num_nodes->ival[0];
-	double const init_link_prob = arg_init_link_prob->dval[0];
-    int const num_links = arg_num_links->ival[0];
+	double const init_link_prob = strtod(arg_init_link_prob->sval[0], NULL);
+    int num_links;
+    if (arg_num_links->count == 0)
+    {
+        num_links = init_num_nodes;
+    }
+    else
+    {
+        num_links = arg_num_links->ival[0];
+    }
     int const time_steps = arg_time_steps->ival[0];
 
-	if (num_errors > 0 && num_links >= 1 && time_steps >= 0 &&
-            num_links > init_num_nodes)
+	if (init_num_nodes < 1 || time_steps < 0 || num_links > init_num_nodes ||
+            init_link_prob > 1 || init_link_prob <= 0)
 	{
-		arg_print_errors(stdout, end, SFN_PROG_NAME);
+		fprintf(stderr, "Invalid arguments.\n");
 		exit_code = EXIT_FAILURE;
 		goto exit;
 	}
@@ -250,7 +266,10 @@ int main(
 
 exit:
 	arg_freetable(arg_table, sizeof(arg_table) / sizeof(arg_table[0]));
-    sfn_free(sfn);
+    if (sfn != NULL)
+    {
+        sfn_free(sfn);
+    }
 	return exit_code;
 }
 
