@@ -1,4 +1,4 @@
-all: build test meatball
+all: build test
 
 
 visual_sources = src/*.cpp

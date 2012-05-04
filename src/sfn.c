@@ -69,14 +69,14 @@ error:
 }
 
 void sfn_init(
-            sfn_t *const sfn,
-            int const num_nodes,
-            double const link_prob)
+        sfn_t *const sfn,
+        int const num_nodes,
+        double const link_prob)
 {
     sfn->num_nodes = num_nodes;
     if (link_prob == 0.0)
     {
-            return;
+        return;
     }
 
     for (int i = 0; i < num_nodes; ++i)
@@ -85,16 +85,66 @@ void sfn_init(
         {
             double const p = (double)rand() / (double)RAND_MAX;
 
-            if (p <= link_prob)
+            if (link_prob > p)
             {
                 sfn->adjacency[i * num_nodes + j] = true;
                 sfn->nodes[i].neighbours[sfn->nodes[i].degree++] =
-                                sfn->nodes + j;
+                        sfn->nodes + j;
                 sfn->nodes[j].neighbours[sfn->nodes[j].degree++] =
-                                sfn->nodes + i;
+                        sfn->nodes + i;
             }
         }
     }
+}
+
+
+int get_random_index(int max)
+{
+    return (int) round((double)(rand() * (double)max)
+            / (double)RAND_MAX);
+}
+
+
+double approximate_clustering_coefficient(sfn_t const *const sfn,
+        int const num_samples)
+{
+    double current_clustering_coefficient = 0.0;
+    for (int k = 0; k < num_samples; ++k)
+    {
+        sfn_node_t const j = sfn->nodes[get_random_index(sfn->num_nodes - 1)];
+        if (j.degree < 2)
+        {
+            continue;
+        }
+        sfn_node_t const u = *j.neighbours[get_random_index(j.degree -1)];
+        sfn_node_t v;
+        do
+        {
+            v = *j.neighbours[get_random_index(j.degree - 1)];
+        } while (u.id == v.id);
+        sfn_node_t first;
+        sfn_node_t second;
+        if (u.id > v.id)
+        {
+            first = u;
+            second = v;
+        }
+        else
+        {
+            first = v;
+            second = u;
+        }
+        if (sfn->adjacency[first.id * sfn->num_nodes + second.id])
+        {
+            current_clustering_coefficient += 1.0;
+        }
+    }
+    return current_clustering_coefficient / (double) num_samples;
+}
+
+static void sfn_ba(
+        sfn_t *const sfn)
+{
 }
 
 int get_random_index(int max)
@@ -162,14 +212,14 @@ bool sfn_write_dot_file(sfn_t const *const sfn, char const *const path)
             goto error;
         }
     }
-    for (int i = 0; i < sfn->num_nodes; ++i)
+    for (size_t i = 0; i < sfn->num_nodes; ++i)
     {
-        for (int j = 0; j < sfn->nodes[i].degree; ++j)
+        for (size_t j = 0; j < sfn->nodes[i].degree; ++j)
         {
             if (sfn->nodes[i].neighbours[j]->id > i)
             {
                 if(fprintf(dot_file, "%lu--%lu;", i,
-                        sfn->nodes[i].neighbours[j]->id) < 0)
+                    sfn->nodes[i].neighbours[j]->id) < 0)
                 {
                     success = false;
                     goto error;
@@ -201,25 +251,21 @@ int main(
     char **argv)
 {
     struct arg_int *arg_init_num_nodes = arg_intn("n", NULL, "<n>", 0, 1,
-			"Initial number of nodes (n >= 1).");
+            "Initial number of nodes (n >= 1).");
     if (arg_init_num_nodes != NULL)
     {
         arg_init_num_nodes->ival[0] = 1;
     }
 
-    struct arg_dbl *arg_init_link_prob = arg_dbln("p", NULL, "<prob>", 0, 1,
-                    "Initial link probability (0 <= p <= 1).");
+    struct arg_str *arg_init_link_prob = arg_strn("p", NULL, "<prob>", 0, 1,
+            "Initial link probability (0 <= p <= 1).");
     if (arg_init_link_prob != NULL)
     {
-            arg_init_link_prob->dval[0] = 0.2;
+        arg_init_link_prob->sval[0] = "0.2";
     }
 
     struct arg_int *arg_num_links = arg_intn("m", NULL, "<n>", 0, 1,
             "Number of links to each new node (m <= n).");
-    if (arg_num_links != NULL)
-    {
-        arg_num_links->ival[0] = 3;
-    }
 
     struct arg_int *arg_time_steps = arg_intn("T", NULL, "<n>", 0, 1,
             "The number of time steps (T >= 0).");
@@ -232,7 +278,7 @@ int main(
             "Path to write a dot file to.");
 
     struct arg_int *arg_seed = arg_intn("s", NULL, "<seed>", 0, 1,
-                    "Random seed.");
+            "Random seed.");
 
     struct arg_int *arg_num_samples = arg_intn("k", NULL, "<samples>", 0, 1,
             "Number of samples to use for the clustering coefficient approx.");
@@ -253,31 +299,46 @@ int main(
 
     if (arg_nullcheck(arg_table) != 0)
     {
-            printf("[ERROR] Insufficient memory for argtable.\n");
-            exit_code = EXIT_FAILURE;
-            goto exit;
+        printf("[ERROR] Insufficient memory for argtable.\n");
+        exit_code = EXIT_FAILURE;
+        goto exit;
     }
 
     int const num_errors = arg_parse(argc, argv, arg_table);
 
+    if (num_errors > 0)
+    {
+        arg_print_errors(stdout, end, SFN_PROG_NAME);
+        exit_code = EXIT_FAILURE;
+        goto exit;
+    }
+
     int const init_num_nodes = arg_init_num_nodes->ival[0];
-    double const init_link_prob = arg_init_link_prob->dval[0];
-    int const num_links = arg_num_links->ival[0];
+    double const init_link_prob = strtod(arg_init_link_prob->sval[0], NULL);
+    int num_links;
+    if (arg_num_links->count == 0)
+    {
+        num_links = init_num_nodes;
+    }
+    else
+    {
+        num_links = arg_num_links->ival[0];
+    }
     int const time_steps = arg_time_steps->ival[0];
     int const num_samples = arg_num_samples->ival[0];
 
-    if (num_errors > 0 && num_links >= 1 && time_steps >= 0 &&
-        num_links > init_num_nodes)
+    if (init_num_nodes < 1 || time_steps < 0 || num_links > init_num_nodes ||
+            init_link_prob > 1 || init_link_prob <= 0)
     {
-            arg_print_errors(stdout, end, SFN_PROG_NAME);
-            exit_code = EXIT_FAILURE;
-            goto exit;
+        fprintf(stderr, "Invalid arguments.\n");
+        exit_code = EXIT_FAILURE;
+        goto exit;
     }
 
     if (arg_seed->count > 0)
     {
-            printf("Seeding PRNG with %d.\n", arg_seed->ival[0]);
-            srand(arg_seed->ival[0]);
+        printf("Seeding PRNG with %d.\n", arg_seed->ival[0]);
+        srand(arg_seed->ival[0]);
     }
 
     if ((sfn = sfn_alloc(init_num_nodes, num_links, time_steps)) == NULL)
@@ -295,20 +356,23 @@ int main(
 
     if (arg_dot_path->count > 0)
     {
-	printf("Writing DOT file...");
-    	fflush(stdout);
+        printf("Writing DOT file...");
+        fflush(stdout);
         if (!sfn_write_dot_file(sfn, arg_dot_path->sval[0]))
         {
             fprintf(stderr, "[ERROR] Failed to write dot file.\n");
             exit_code = EXIT_FAILURE;
             goto exit;
         }
-	printf("done.\n");
+        printf("done.\n");
     }
 
 exit:
     arg_freetable(arg_table, sizeof(arg_table) / sizeof(arg_table[0]));
-    sfn_free(sfn);
+    if (sfn != NULL)
+    {
+        sfn_free(sfn);
+    }
     return exit_code;
 }
 

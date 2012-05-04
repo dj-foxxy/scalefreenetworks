@@ -14,9 +14,14 @@ State * GraphLayout::generateLayout(Graph * p_graph, float damping)
     this_node->m_velocity.Y = 0.0f;
     this_node->m_velocity.Z = 0.0f;
     
-    this_node->m_position.X = rand() % 1000;
-    this_node->m_position.Y = rand() % 1000;
-    this_node->m_position.Z = rand() % 1000;
+    double jitter = 1000.0 / (double)(rand () % 1000);
+    
+    this_node->m_position.X = rand() % ( 1000 )
+			     + jitter / (double)(2 + rand() % 4);
+    this_node->m_position.Y = rand() % ( 1000 )
+			     + jitter / (double)(2 + rand() % 4);
+    this_node->m_position.Z = rand() %  ( 1000 )
+			     + jitter / (double)(2 + rand() % 4);
   }
 }
 
