@@ -1,5 +1,3 @@
-all: build test
-
 
 visual_sources = src/*.cpp
 visual_objects = *.o
@@ -10,7 +8,8 @@ V_LDFLAGS= -ldl
 OGL_CFLAGS=-DGL_GLEXT_PROTOTYPES
 OGL_LDFLAGS=-lGL -lglut -lGLU
 
-#compile
+all: build
+
 meatball: $(visual_objects)
 	g++ $(LIBFLAGS) $(OGL_CFLAGS) -o bin/meatball $(visual_objects) $(LDFLAGS) $(OGL_LDFLAGS)
 	rm $(visual_objects)
@@ -21,14 +20,11 @@ build: lib
 clean:
 	rm -fr bin/
 
-deep-clean: clean
-	rm -fr lib/
+clean-deep: clean
+	make -C lib/ clean
 
 lib:
-	mkdir -p lib/
-	wget -O - http://prdownloads.sourceforge.net/argtable/argtable2-13.tar.gz \
-		| tar --directory=lib/ -xz
-	(cd lib/argtable2-13 && ./configure && make)
+	make -C lib
 
 rebuild: clean build
 
@@ -37,7 +33,7 @@ test: build
 	dot -T png -o bin/sfn.png bin/sfn.dot
 	eog bin/sfn.png
 
-.PONY: all build clean deep-clean lib test
+.PONY: all build clean clean-deep lib test
 
 
 $(visual_objects): $(visual_sources)

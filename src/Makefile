@@ -6,7 +6,7 @@ build: ../bin/sfn
 	mkdir -p ../bin
 	gcc -Wall -g3 -O0 --std=c99 \
 		-I ../lib/argtable2-13/src -lm\
-		../lib/argtable2-13/src/*.c $? -o $@
+		../lib/argtable2-13/src/*.o $? -o $@
 
 .PONY: all build test
 
