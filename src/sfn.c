@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -17,8 +18,10 @@ typedef struct
 {
     size_t num_nodes;
     size_t max_nodes;
+    size_t total_degree;
     sfn_node_t *nodes;
     bool *adjacency;
+    double *dist;
 } sfn_t;
 
 sfn_t *sfn_alloc(
@@ -34,16 +37,20 @@ sfn_t *sfn_alloc(
             max_nodes * max_nodes  * sizeof(*adjacency));
     sfn_node_t **const neighbours = malloc(
             max_nodes * max_nodes * sizeof(*neighbours));
+    double *dist = malloc(max_nodes * sizeof(*dist));
 
-    if (sfn == NULL || nodes == NULL || adjacency == NULL || neighbours == NULL)
+    if (sfn == NULL || nodes == NULL || adjacency == NULL || neighbours == NULL
+            || dist == NULL)
     {
         goto error;
     }
 
     sfn->num_nodes = 0;
     sfn->max_nodes = max_nodes;
+    sfn->total_degree = 0;
     sfn->nodes = nodes;
     sfn->adjacency = adjacency;
+    sfn->dist = dist;
 
     for (int i = 0; i < max_nodes; ++i)
     {
@@ -64,7 +71,30 @@ error:
     free(nodes);
     free(adjacency);
     free(neighbours);
+    free(dist);
     return NULL;
+}
+
+static void sfn_add_link(
+        sfn_t *const sfn,
+        size_t i,
+        size_t j)
+{
+    assert(i != j);
+
+    if (i < j)
+    {
+       size_t const tmp = j;
+       j =  i;
+       i = tmp;
+    }
+
+    sfn->total_degree += 2;
+    sfn->adjacency[i * sfn->num_nodes + j] = true;
+    sfn->nodes[i].neighbours[sfn->nodes[i].degree++] =
+        sfn->nodes + j;
+    sfn->nodes[j].neighbours[sfn->nodes[j].degree++] =
+        sfn->nodes + i;
 }
 
 void sfn_init(
@@ -86,19 +116,52 @@ void sfn_init(
 
             if (link_prob > p)
             {
-                sfn->adjacency[i * num_nodes + j] = true;
-                sfn->nodes[i].neighbours[sfn->nodes[i].degree++] =
-                        sfn->nodes + j;
-                sfn->nodes[j].neighbours[sfn->nodes[j].degree++] =
-                        sfn->nodes + i;
+                sfn_add_link(sfn, i, j);
             }
         }
     }
 }
 
 static void sfn_ba(
-        sfn_t *const sfn)
+        sfn_t *const sfn,
+        int const num_links,
+        int const time_steps)
 {
+    for (int t = 1; t <= time_steps; ++t)
+    {
+        for (size_t i = 0; i < sfn->num_nodes; ++i)
+        {
+            sfn->dist[i] = ((double)sfn->nodes[i].degree + 1)
+                / ((double)sfn->total_degree + sfn->num_nodes);
+        }
+
+        size_t i = sfn->num_nodes++;
+        double tp = 1.0;
+
+        for (int l = 0; l < num_links; ++l)
+        {
+            double const p = ((double)rand() * tp) / (double)RAND_MAX;
+            double q = 0.0;
+
+            printf("%d %f %f\n", l, p, tp);
+
+            int j = 0;
+            for (;;)
+            {
+                q += sfn->dist[j];
+                if (p <= q)
+                {
+                    break;
+                }
+                j++;
+
+            }
+
+            sfn_add_link(sfn, i, j);
+            tp -= sfn->dist[j];
+            sfn->dist[j] = 0.0;
+        }
+    }
 }
 
 bool sfn_write_dot_file(sfn_t const *const sfn, char const *const path)
@@ -151,6 +214,7 @@ void sfn_free(
         sfn_t *const sfn)
 {
     free(sfn->nodes[0].neighbours);
+    free(sfn->dist);
     free(sfn->adjacency);
     free(sfn->nodes);
     free(sfn);
@@ -250,6 +314,7 @@ int main(
     }
 
     sfn_init(sfn, init_num_nodes, init_link_prob);
+    sfn_ba(sfn, num_links, time_steps);
 
     if (arg_dot_path->count > 0)
     {
