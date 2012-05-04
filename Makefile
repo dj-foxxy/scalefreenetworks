@@ -33,7 +33,7 @@ lib:
 rebuild: clean build
 
 test: build
-	valgrind ./bin/sfn -d bin/sfn.dot -n 10 -m 3 -T 10 -s 4
+	valgrind ./bin/sfn -d bin/sfn.dot -n 10 -m 3 -T 10 -s 4 -k 100
 	dot -T png -o bin/sfn.png bin/sfn.dot
 	eog bin/sfn.png
 

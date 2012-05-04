@@ -91,7 +91,8 @@ static void sfn_add_link(
     }
 
     sfn->total_degree += 2;
-    sfn->adjacency[i * sfn->num_nodes + j] = true;
+    sfn->adjacency[i * sfn->max_nodes + j] = true;
+    sfn->adjacency[j * sfn->max_nodes + i] = true;
     sfn->nodes[i].neighbours[sfn->nodes[i].degree++] =
         sfn->nodes + j;
     sfn->nodes[j].neighbours[sfn->nodes[j].degree++] =
@@ -123,49 +124,36 @@ void sfn_init(
     }
 }
 
-
-int get_random_index(int max)
+double calculate_clustering_coefficient(sfn_t const *const sfn)
 {
-    return (int) round((double)(rand() * (double)max)
-            / (double)RAND_MAX);
-}
-
-
-double approximate_clustering_coefficient(sfn_t const *const sfn,
-        int const num_samples)
-{
-    double current_clustering_coefficient = 0.0;
-    for (int k = 0; k < num_samples; ++k)
+    double cc = 0.0;
+    for (int i = 0; i < sfn->num_nodes; ++i)
     {
-        sfn_node_t const j = sfn->nodes[get_random_index(sfn->num_nodes - 1)];
-        if (j.degree < 2)
+        int e = 0;
+        sfn_node_t node = sfn->nodes[i];
+        int const k = node.degree;
+        if (k < 2)
         {
             continue;
         }
-        sfn_node_t const u = *j.neighbours[get_random_index(j.degree -1)];
-        sfn_node_t v;
-        do
+        for (int j = 0; j < k; ++j)
         {
-            v = *j.neighbours[get_random_index(j.degree - 1)];
-        } while (u.id == v.id);
-        sfn_node_t first;
-        sfn_node_t second;
-        if (u.id > v.id)
-        {
-            first = u;
-            second = v;
+            sfn_node_t neighbour = *node.neighbours[j];
+            int const neighbour_k = neighbour.degree;
+            for (int n = 0; n < neighbour_k; ++n)
+            {
+                sfn_node_t n_neighbour = *neighbour.neighbours[n];
+                if (sfn->adjacency[node.id * sfn->max_nodes + n_neighbour.id])
+                {
+                    e += 1;
+                }
+            }
         }
-        else
-        {
-            first = v;
-            second = u;
-        }
-        if (sfn->adjacency[first.id * sfn->num_nodes + second.id])
-        {
-            current_clustering_coefficient += 1.0;
-        }
+        double local_cc = e / (double)(k * (k - 1));
+        cc += local_cc;
     }
-    return current_clustering_coefficient / (double) num_samples;
+
+    return cc / (double) sfn->num_nodes;
 }
 
 static void sfn_ba(
@@ -188,8 +176,6 @@ static void sfn_ba(
         {
             double const p = ((double)rand() * tp) / (double)RAND_MAX;
             double q = 0.0;
-
-            printf("%d %f %f\n", l, p, tp);
 
             int j = 0;
             for (;;)
@@ -216,16 +202,17 @@ int get_random_index(int max)
             / (double)RAND_MAX);
 }
 
-
 double approximate_clustering_coefficient(sfn_t const *const sfn,
         int const num_samples)
 {
     double current_clustering_coefficient = 0.0;
+    int skips = 0;
     for (int k = 0; k < num_samples; ++k)
     {
         sfn_node_t const j = sfn->nodes[get_random_index(sfn->num_nodes - 1)];
         if (j.degree < 2)
         {
+            skips++;
             continue;
         }
         sfn_node_t const u = *j.neighbours[get_random_index(j.degree -1)];
@@ -234,24 +221,13 @@ double approximate_clustering_coefficient(sfn_t const *const sfn,
         {
             v = *j.neighbours[get_random_index(j.degree - 1)];
         } while (u.id == v.id);
-        sfn_node_t first;
-        sfn_node_t second;
-        if (u.id > v.id)
-        {
-            first = u;
-            second = v;
-        }
-        else
-        {
-            first = v;
-            second = u;
-        }
-        if (sfn->adjacency[first.id * sfn->num_nodes + second.id])
+        if (sfn->adjacency[u.id * sfn->max_nodes + v.id])
         {
             current_clustering_coefficient += 1.0;
         }
     }
-    return current_clustering_coefficient / (double) num_samples;
+    return current_clustering_coefficient
+            / ((double) num_samples - (double) skips);
 }
 
 bool sfn_write_dot_file(sfn_t const *const sfn, char const *const path)
@@ -418,6 +394,10 @@ int main(
     double approx_cc = approximate_clustering_coefficient(sfn, num_samples);
 
     printf("approx cc: %f\n", approx_cc);
+
+    double real_cc = calculate_clustering_coefficient(sfn);
+
+    printf("real cc: %f\n", real_cc);
 
     if (arg_dot_path->count > 0)
     {
