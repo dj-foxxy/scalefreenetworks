@@ -2,7 +2,9 @@ all: ../bin/sfn
 
 ../bin/sfn: sfn.c
 	mkdir -p ../bin
-	gcc -Wall -Werror --std=c99 -O3 $? -o $@
+	gcc -Wall -O3 \
+		-I ../lib/argtable2-13/src \
+		../lib/argtable2-13/src/*.c $? -o $@
 
 .PONY: all
 
