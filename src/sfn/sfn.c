@@ -120,6 +120,8 @@ static void sfn_init(
             }
         }
     }
+
+    fprintf(anim, "F\n");
 }
 
 static void sfn_ba(
@@ -136,7 +138,7 @@ static void sfn_ba(
         }
 
         size_t i = sfn->num_nodes++;
-        fprintf(anim, "A\n");
+        fprintf(anim, "A\nF\n");
         double tp = 1.0;
 
         for (size_t l = 0; l < num_links; ++l)
@@ -157,7 +159,7 @@ static void sfn_ba(
             }
 
             sfn_add_link(sfn, i, j);
-            fprintf(anim, "L %lu %lu\n", i, j);
+            fprintf(anim, "L %lu %lu\nF\n", i, j);
             tp -= sfn->dist[j];
             sfn->dist[j] = 0.0;
         }

@@ -14,6 +14,10 @@ class Command(object):
         tokens = string.strip().split(' ')
         return COMMANDS[tokens[0]].from_tokens(tokens[1:])
 
+class NewFrameCommand(Command):
+    @classmethod
+    def from_tokens(cls, tokens):
+        return cls()
 
 class InitialCommand(Command):
     def __init__(self, num_nodes):
@@ -64,6 +68,7 @@ class AddLinkCommand(Command):
 
 
 COMMANDS = {
+    'F': NewFrameCommand,
     'I': InitialCommand,
     'R': RandomLinkCommand,
     'A': AddNodeCommand,
@@ -78,9 +83,11 @@ class Animation:
         graph = pgv.AGraph()
         frames = []
         for command in self.commands:
-            command(graph)
-            frames.append(graph)
-            graph = graph.copy()
+            if isinstance(command, NewFrameCommand):
+                frames.append(graph)
+                graph = graph.copy()
+            else:
+                command(graph)
         return frames
 
     @classmethod

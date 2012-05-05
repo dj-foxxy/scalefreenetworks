@@ -11,7 +11,8 @@ make build
 anim=/tmp/animation
 rm -fr "${anim}"
 mkdir "${anim}"
-./bin/sfn/sfn -n 10 -T 50 -m 2 -a "${anim}/animation"
+./bin/sfn/sfn -n 10 -T 20 -m 3 -a "${anim}/animation"
 cat "${anim}/animation"
 PYTHONPATH=src/ python2 -m pyanim "${anim}/animation" "${anim}"
+eog ${anim}/.png
 
