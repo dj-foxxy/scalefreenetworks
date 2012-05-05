@@ -1,12 +1,15 @@
 all: build
 
-build: ../bin/sfn
+build: sfn vis
 
-../bin/sfn: sfn.c
-	mkdir -p ../bin
-	gcc -Wall -g3 -O0 --std=c99 \
-		-I ../lib/argtable2-13/src -lm\
-		../lib/argtable2-13/src/*.o $? -o $@
+clean:
+	make -C vis/ clean
 
-.PONY: all build test
+sfn:
+	make -C $@/
+
+vis:
+	make -C $@/
+
+.PHONY: all build clean sfn vis
 
