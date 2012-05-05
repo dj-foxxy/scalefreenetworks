@@ -47,7 +47,7 @@ class RandomLinkCommand(Command):
 
 class AddNodeCommand(Command):
     def __call__(self, graph):
-        graph.add_node(graph.number_of_nodes())
+        graph.add_node(graph.number_of_nodes(), style='filled')
 
     @classmethod
     def from_tokens(cls, tokens):
@@ -67,12 +67,42 @@ class AddLinkCommand(Command):
         return cls(*map(int, tokens))
 
 
+class SetNodeColour(Command):
+    def __init__(self, i, colour):
+        self.i = i
+        self.colour = colour
+
+    def __call__(self, graph):
+        node = graph.get_node(self.i)
+        node.attr['fillcolor'] = self.colour
+
+    @classmethod
+    def from_tokens(cls, tokens):
+        return cls(int(tokens[0]), tokens[1])
+
+class SetEdgeColour(Command):
+    def __init__(self, i, j, colour):
+        self.i = i
+        self.j = j
+        self.colour = colour
+
+    def __call__(self, graph):
+        edge = graph.get_edge(self.i, self.j)
+        edge.attr['color'] = self.colour
+
+    @classmethod
+    def from_tokens(cls, tokens):
+        return cls(int(tokens[0]), int(tokens[1]), tokens[2])
+
+
 COMMANDS = {
     'F': NewFrameCommand,
     'I': InitialCommand,
     'R': RandomLinkCommand,
     'A': AddNodeCommand,
     'L': AddLinkCommand,
+    'C': SetNodeColour,
+    'E': SetEdgeColour,
 }
 
 class Animation:

@@ -14,5 +14,5 @@ mkdir "${anim}"
 ./bin/sfn/sfn -n 10 -T 20 -m 3 -a "${anim}/animation"
 cat "${anim}/animation"
 PYTHONPATH=src/ python2 -m pyanim "${anim}/animation" "${anim}"
-eog ${anim}/.png
+eog ${anim}/0.png
 

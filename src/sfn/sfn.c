@@ -137,8 +137,8 @@ static void sfn_ba(
                 / ((double)sfn->total_degree + sfn->num_nodes);
         }
 
-        size_t i = sfn->num_nodes++;
-        fprintf(anim, "A\nF\n");
+        size_t const i = sfn->num_nodes++;
+        fprintf(anim, "A\nC %lu red\nF\n", i);
         double tp = 1.0;
 
         for (size_t l = 0; l < num_links; ++l)
@@ -159,10 +159,12 @@ static void sfn_ba(
             }
 
             sfn_add_link(sfn, i, j);
-            fprintf(anim, "L %lu %lu\nF\n", i, j);
+            fprintf(anim, "L %lu %lu\nE %lu %lu red\nF\nE %lu %lu black\n",
+                    i, j, i, j, i, j);
             tp -= sfn->dist[j];
             sfn->dist[j] = 0.0;
         }
+        fprintf(anim, "C %lu white\n", i);
     }
 }
 

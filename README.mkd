@@ -35,3 +35,13 @@ ID to the new node.
 
 Add a new link between the [i]th and [j]th node.
 
+    C [i] [colour]
+
+Set the colour of the [i]th node to [colour]. [colour] can be a common colour
+name, for example, red.
+
+    E [i] [j] [colour]
+
+Set the colour of the edge between [i]th and [j]th node to [colour] can be a
+common colour name, for example, green.
+
