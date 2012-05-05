@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <math.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -26,6 +27,19 @@ typedef struct
 } sfn_t;
 
 static FILE *anim = NULL;
+
+static void sfn_anim(char const *const fmt, ...)
+{
+    if (anim == NULL)
+    {
+        return;
+    }
+
+    va_list va;
+    va_start(va, fmt);
+    vfprintf(anim, fmt, va);
+    va_end(va);
+}
 
 static sfn_t *sfn_alloc(
         int const init_num_nodes,
@@ -100,7 +114,7 @@ static void sfn_init(
         double const link_prob)
 {
     sfn->num_nodes = num_nodes;
-    fprintf(anim, "I %lu\n", sfn->num_nodes);
+    sfn_anim("I %lu\n", sfn->num_nodes);
 
     if (link_prob == 0.0)
     {
@@ -115,13 +129,13 @@ static void sfn_init(
 
             if (link_prob > p)
             {
-                fprintf(anim, "R %lu %lu\n", i, j);
+                sfn_anim("R %lu %lu\n", i, j);
                 sfn_add_link(sfn, i, j);
             }
         }
     }
 
-    fprintf(anim, "F\n");
+    sfn_anim("F\n");
 }
 
 static void sfn_ba(
@@ -138,7 +152,7 @@ static void sfn_ba(
         }
 
         size_t const i = sfn->num_nodes++;
-        fprintf(anim, "A\nC %lu red\nF\n", i);
+        sfn_anim("A\nC %lu red\nF\n", i);
         double tp = 1.0;
 
         for (size_t l = 0; l < num_links; ++l)
@@ -159,12 +173,12 @@ static void sfn_ba(
             }
 
             sfn_add_link(sfn, i, j);
-            fprintf(anim, "L %lu %lu\nE %lu %lu red\nF\nE %lu %lu black\n",
+            sfn_anim("L %lu %lu\nE %lu %lu red\nF\nE %lu %lu black\n",
                     i, j, i, j, i, j);
             tp -= sfn->dist[j];
             sfn->dist[j] = 0.0;
         }
-        fprintf(anim, "C %lu white\n", i);
+        sfn_anim("C %lu white\n", i);
     }
 }
 
@@ -355,7 +369,7 @@ int main(
 
     if (arg_nullcheck(arg_table) != 0)
     {
-        printf("[ERROR] Insufficient memory for argtable.\n");
+        fprintf(stderr, "[ERROR] Insufficient memory for argtable.\n");
         exit_code = EXIT_FAILURE;
         goto exit;
     }
@@ -364,7 +378,7 @@ int main(
 
     if (num_errors > 0)
     {
-        arg_print_errors(stdout, end, SFN_PROG_NAME);
+        arg_print_errors(stderr, end, SFN_PROG_NAME);
         exit_code = EXIT_FAILURE;
         goto exit;
     }
@@ -393,15 +407,11 @@ int main(
 
     if (arg_seed->count > 0)
     {
-        printf("Seeding PRNG with %d.\n", arg_seed->ival[0]);
+        fprintf(stderr, "Seeding PRNG with %d.\n", arg_seed->ival[0]);
         srand(arg_seed->ival[0]);
     }
 
-    if (arg_anim_path->count == 0)
-    {
-        anim = stdout;
-    }
-    else
+    if (arg_anim_path->count > 0)
     {
         if ((anim = fopen(arg_anim_path->sval[0], "w")) == NULL)
         {
@@ -409,7 +419,6 @@ int main(
             exit_code = EXIT_FAILURE;
             goto exit;
         }
-
     }
 
     if ((sfn = sfn_alloc(init_num_nodes, num_links, time_steps)) == NULL)
@@ -426,20 +435,20 @@ int main(
             num_samples);
     double const real_cc = calculate_clustering_coefficient(sfn);
 
-    printf("Approx CC: %f\n", approx_cc);
-    printf("  Real CC: %f\n", real_cc);
+    printf("CC\t%.100f\n", approx_cc);
+    printf("ACC\t%.100f\n", real_cc);
 
     if (arg_dot_path->count > 0)
     {
-        printf("Writing DOT file...");
-        fflush(stdout);
+        fprintf(stderr, "Writing DOT file...");
+        fflush(stderr);
         if (!sfn_write_dot_file(sfn, arg_dot_path->sval[0]))
         {
             fprintf(stderr, "[ERROR] Failed to write dot file.\n");
             exit_code = EXIT_FAILURE;
             goto exit;
         }
-        printf("done.\n");
+        fprintf(stderr, "done.\n");
     }
 
 exit:
