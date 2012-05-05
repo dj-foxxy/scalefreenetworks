@@ -24,7 +24,7 @@ rc('font', family='serif')
 # 8 - cc
 # 9 - runtime
 
-def plot_cc(r):
+def plot_cc(r, output):
     plt.clf()
     plt.semilogy(r[:,2] + r[0, 0], r[:,8], 'b-', label='Actual')
     plt.semilogy(r[:,2] + r[0, 0], r[:,6], 'r-', label='Approx.')
@@ -35,9 +35,12 @@ def plot_cc(r):
               % (r[0,0], r[0,1], r[0,3]))
     plt.xlabel('Nodes')
     plt.ylabel('Clustering coefficient')
-    plt.show()
+    if output == '-':
+        plt.show()
+    else:
+        plt.savefig(output)
 
-def plot_time(r):
+def plot_time(r, output):
     plt.clf()
     plt.semilogy(r[:,2] + r[0, 0], r[:,9], 'b-', label='Actual')
     plt.semilogy(r[:,2] + r[0, 0], r[:,7], 'r-', label='Approx.')
@@ -49,13 +52,16 @@ def plot_time(r):
     plt.xlabel('Nodes')
     plt.ylabel('Execution time (ms)')
     plt.ylim(1)
-    plt.show()
+    if output == '-':
+        plt.show()
+    else:
+        plt.savefig(output)
 
 def build_argument_parser():
     ap = ArgumentParser()
     add = ap.add_argument
-    add('-c', '--plot-cc', action='store_true',  default=False)
-    add('-t', '--plot-time', action='store_true',  default=False)
+    add('-c', '--plot-cc', const='-', nargs='?')
+    add('-t', '--plot-time', const='-', nargs='?')
     add('results')
     return ap
 
@@ -66,9 +72,9 @@ def main(argv=None):
     with open(args.results, 'rb') as results_file:
         results = numpy.load(results_file)
     if args.plot_cc:
-        plot_cc(results)
+        plot_cc(results, output=args.plot_cc)
     if args.plot_time:
-        plot_time(results)
+        plot_time(results, output=args.plot_time)
     return 0
 
 if __name__ == '__main__':
