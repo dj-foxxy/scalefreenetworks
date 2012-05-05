@@ -9,7 +9,7 @@ $(BIN):
 	mkdir -p $@
 
 $(BIN)/sfn: sfn.c
-	gcc -Wall -Werror -g3 -O0 --std=c99 \
+	gcc -Wall -Werror -g0 -Ofast --std=c99 \
 		-I $(LIB)/argtable2-13/src -lm \
 		$(LIB)/argtable2-13/src/*.o $? -o $@
 

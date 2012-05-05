@@ -47,7 +47,7 @@ class RandomLinkCommand(Command):
 
 class AddNodeCommand(Command):
     def __call__(self, graph):
-        graph.add_node(graph.number_of_nodes(), style='filled')
+        graph.add_node(graph.number_of_nodes())
 
     @classmethod
     def from_tokens(cls, tokens):
@@ -111,6 +111,7 @@ class Animation:
 
     def __call__(self):
         graph = pgv.AGraph()
+        graph.node_attr.update(style='filled', fillcolor='white')
         frames = []
         for command in self.commands:
             if isinstance(command, NewFrameCommand):

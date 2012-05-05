@@ -1,12 +1,23 @@
 #include <assert.h>
 #include <math.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/time.h>
 
 #include <argtable2.h>
 
 #define SFN_PROG_NAME "sfn"
+
+#define COLOUR_HOME "green"
+#define COLOUR_HOME_UNVISITED "white"
+#define COLOUR_HOME_VISITED "grey"
+#define COLOUR_NEIGHBOUR "red"
+#define COLOUR_NEIGHBOUR_VISITED "plum1"
+#define COLOUR_N_NEIGHBOUR "powderblue"
+#define COLOUR_N_NEIGHBOUR_VISITED "powderblue"
+#define COLOUR_HIT "yellow"
 
 typedef struct _sfn_node_t
 {
@@ -26,6 +37,19 @@ typedef struct
 } sfn_t;
 
 static FILE *anim = NULL;
+
+static void sfn_anim(char const *const fmt, ...)
+{
+    if (anim == NULL)
+    {
+        return;
+    }
+
+    va_list va;
+    va_start(va, fmt);
+    vfprintf(anim, fmt, va);
+    va_end(va);
+}
 
 static sfn_t *sfn_alloc(
         int const init_num_nodes,
@@ -100,7 +124,7 @@ static void sfn_init(
         double const link_prob)
 {
     sfn->num_nodes = num_nodes;
-    fprintf(anim, "I %lu\n", sfn->num_nodes);
+    sfn_anim("I %lu\n", sfn->num_nodes);
 
     if (link_prob == 0.0)
     {
@@ -115,13 +139,13 @@ static void sfn_init(
 
             if (link_prob > p)
             {
-                fprintf(anim, "R %lu %lu\n", i, j);
+                sfn_anim("R %lu %lu\n", i, j);
                 sfn_add_link(sfn, i, j);
             }
         }
     }
 
-    fprintf(anim, "F\n");
+    sfn_anim("F\n");
 }
 
 static void sfn_ba(
@@ -138,7 +162,7 @@ static void sfn_ba(
         }
 
         size_t const i = sfn->num_nodes++;
-        fprintf(anim, "A\nC %lu red\nF\n", i);
+        sfn_anim("A\nC %lu red\nF\n", i);
         double tp = 1.0;
 
         for (size_t l = 0; l < num_links; ++l)
@@ -159,12 +183,12 @@ static void sfn_ba(
             }
 
             sfn_add_link(sfn, i, j);
-            fprintf(anim, "L %lu %lu\nE %lu %lu red\nF\nE %lu %lu black\n",
+            sfn_anim("L %lu %lu\nE %lu %lu red\nF\nE %lu %lu black\n",
                     i, j, i, j, i, j);
             tp -= sfn->dist[j];
             sfn->dist[j] = 0.0;
         }
-        fprintf(anim, "C %lu white\n", i);
+        sfn_anim("C %lu white\n", i);
     }
 }
 
@@ -172,40 +196,115 @@ static double calculate_clustering_coefficient(
         sfn_t const *const sfn)
 {
     double cc = 0.0;
-
-    for (int i = 0; i < sfn->num_nodes; ++i)
+    bool *const neighbours_visited = malloc(sizeof(bool) * sfn->max_nodes);
+    if (neighbours_visited == NULL)
     {
+        goto error;
+    }
+
+    for (size_t i = 0; i < sfn->num_nodes; ++i)
+    {
+        for (size_t j= 0; j < sfn->num_nodes; ++j)
+        {
+            neighbours_visited[j] = false;
+        }
         sfn_node_t const *const node = &sfn->nodes[i];
+        sfn_anim("C %lu %s\nF\n", node->id, COLOUR_HOME);
 
         int const k = node->degree;
 
         if (k < 2)
         {
+            sfn_anim("C %lu %s\n", node->id, COLOUR_HOME_VISITED);
             continue;
         }
 
         int e = 0;
 
-        for (int j = 0; j < k; ++j)
+        for (size_t j = 0; j < k; ++j)
         {
             sfn_node_t const *const neighbour = node->neighbours[j];
 
-            for (int n = 0; n < neighbour->degree; ++n)
+            sfn_anim("C %lu %s\nF\n", neighbour->id, COLOUR_NEIGHBOUR);
+
+            for (size_t n = 0; n < neighbour->degree; ++n)
             {
                 sfn_node_t const *const n_neighbour = neighbour->neighbours[n];
+
+                if (n_neighbour->id == node->id)
+                {
+                    continue;
+                }
 
                 if (sfn->adjacency[node->id * sfn->max_nodes + n_neighbour->id])
                 {
                     e += 1;
+                    sfn_anim("C %lu %s\nF\n", n_neighbour->id, COLOUR_HIT);
+                }
+                else
+                {
+                    sfn_anim("C %lu %s\nF\n", n_neighbour->id,
+                            COLOUR_N_NEIGHBOUR);
+                    sfn_anim("C %lu %s\n",
+                            n_neighbour->id, COLOUR_N_NEIGHBOUR_VISITED);
                 }
             }
+
+            for (size_t n = 0; n < neighbour->degree; ++n)
+            {
+                sfn_node_t const *const n_neighbour = neighbour->neighbours[n];
+                size_t id = n_neighbour->id;
+                if (id == node->id)
+                {
+                    continue;
+                }
+                if (neighbours_visited[id])
+                {
+                    sfn_anim("C %lu %s\n", id, COLOUR_NEIGHBOUR_VISITED);
+                }
+                else
+                {
+                    if (n_neighbour->id <= i)
+                    {
+                        sfn_anim("C %lu %s\n", id, COLOUR_HOME_VISITED);
+                    }
+                    else
+                    {
+                        sfn_anim("C %lu %s\n", id, COLOUR_HOME_UNVISITED);
+                    }
+                }
+            }
+
+            neighbours_visited[neighbour->id] = true;
+            sfn_anim("C %lu %s\n", neighbour->id, COLOUR_NEIGHBOUR_VISITED);
+
         }
+
+        for (size_t j = 0; j < node->degree; ++j)
+        {
+            sfn_node_t const *const neighbour = node->neighbours[j];
+            if (neighbour->id <= i)
+            {
+                sfn_anim("C %lu %s\n", neighbour->id, COLOUR_HOME_VISITED);
+            }
+            else
+            {
+                sfn_anim("C %lu %s\n", neighbour->id, COLOUR_HOME_UNVISITED);
+            }
+        }
+
+        sfn_anim("C %lu %s\n", node->id, COLOUR_HOME_VISITED);
 
         double const local_cc = (double)e / (double)(k * (k - 1));
         cc += local_cc;
     }
 
+    free(neighbours_visited);
     return cc / (double)sfn->num_nodes;
+
+error:
+    free(neighbours_visited);
+    return -1.0;
 }
 
 
@@ -219,13 +318,11 @@ double approximate_clustering_coefficient(sfn_t const *const sfn,
         int const num_samples)
 {
     double current_clustering_coefficient = 0.0;
-    int skips = 0;
     for (int k = 0; k < num_samples; ++k)
     {
         sfn_node_t const j = sfn->nodes[get_random_index(sfn->num_nodes - 1)];
         if (j.degree < 2)
         {
-            skips++;
             continue;
         }
         sfn_node_t const u = *j.neighbours[get_random_index(j.degree -1)];
@@ -239,8 +336,7 @@ double approximate_clustering_coefficient(sfn_t const *const sfn,
             current_clustering_coefficient += 1.0;
         }
     }
-    return current_clustering_coefficient
-            / ((double) num_samples - (double) skips);
+    return current_clustering_coefficient / (double) num_samples;
 }
 
 bool sfn_write_dot_file(sfn_t const *const sfn, char const *const path)
@@ -355,7 +451,7 @@ int main(
 
     if (arg_nullcheck(arg_table) != 0)
     {
-        printf("[ERROR] Insufficient memory for argtable.\n");
+        fprintf(stderr, "[ERROR] Insufficient memory for argtable.\n");
         exit_code = EXIT_FAILURE;
         goto exit;
     }
@@ -364,7 +460,7 @@ int main(
 
     if (num_errors > 0)
     {
-        arg_print_errors(stdout, end, SFN_PROG_NAME);
+        arg_print_errors(stderr, end, SFN_PROG_NAME);
         exit_code = EXIT_FAILURE;
         goto exit;
     }
@@ -383,8 +479,8 @@ int main(
     int const time_steps = arg_time_steps->ival[0];
     int const num_samples = arg_num_samples->ival[0];
 
-    if (init_num_nodes < 1 || time_steps < 0 || num_links > init_num_nodes ||
-            init_link_prob > 1 || init_link_prob <= 0)
+    if (init_num_nodes < 1 || time_steps <= 0 || num_links > init_num_nodes
+            || init_link_prob > 1 || init_link_prob <= 0 || num_links <= 0)
     {
         fprintf(stderr, "Invalid arguments.\n");
         exit_code = EXIT_FAILURE;
@@ -393,15 +489,11 @@ int main(
 
     if (arg_seed->count > 0)
     {
-        printf("Seeding PRNG with %d.\n", arg_seed->ival[0]);
+        fprintf(stderr, "Seeding PRNG with %d.\n", arg_seed->ival[0]);
         srand(arg_seed->ival[0]);
     }
 
-    if (arg_anim_path->count == 0)
-    {
-        anim = stdout;
-    }
-    else
+    if (arg_anim_path->count > 0)
     {
         if ((anim = fopen(arg_anim_path->sval[0], "w")) == NULL)
         {
@@ -409,7 +501,6 @@ int main(
             exit_code = EXIT_FAILURE;
             goto exit;
         }
-
     }
 
     if ((sfn = sfn_alloc(init_num_nodes, num_links, time_steps)) == NULL)
@@ -422,24 +513,44 @@ int main(
     sfn_init(sfn, init_num_nodes, init_link_prob);
     sfn_ba(sfn, num_links, time_steps);
 
+
+    struct timeval before, after;
+    double d1;
+    gettimeofday(&before, NULL);
     double const approx_cc = approximate_clustering_coefficient(sfn,
             num_samples);
-    double const real_cc = calculate_clustering_coefficient(sfn);
+    gettimeofday(&after, NULL);
+    d1 = (after.tv_sec - before.tv_sec) * 1000.0
+            + (after.tv_usec - before.tv_usec) / 1000.0;
 
-    printf("Approx CC: %f\n", approx_cc);
-    printf("  Real CC: %f\n", real_cc);
+    double real_cc, d2;
+    gettimeofday(&before, NULL);
+    if ((real_cc = calculate_clustering_coefficient(sfn)) < 0.0)
+    {
+        fprintf(stderr, "[ERROR] Insufficient memory for calc coeff.\n");
+        exit_code = EXIT_FAILURE;
+        goto exit;
+    }
+    gettimeofday(&after, NULL);
+    d2 = (after.tv_sec - before.tv_sec) * 1000.0
+            + (after.tv_usec - before.tv_usec) / 1000.0;
+
+    printf("ACC\t%.100f\n", approx_cc);
+    printf("ACCT\t%.100f\n", d1);
+    printf("CC\t%.100f\n", real_cc);
+    printf("CCT\t%.100f\n", d2);
 
     if (arg_dot_path->count > 0)
     {
-        printf("Writing DOT file...");
-        fflush(stdout);
+        fprintf(stderr, "Writing DOT file...");
+        fflush(stderr);
         if (!sfn_write_dot_file(sfn, arg_dot_path->sval[0]))
         {
             fprintf(stderr, "[ERROR] Failed to write dot file.\n");
             exit_code = EXIT_FAILURE;
             goto exit;
         }
-        printf("done.\n");
+        fprintf(stderr, "done.\n");
     }
 
 exit:

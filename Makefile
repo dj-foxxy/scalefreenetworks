@@ -16,17 +16,21 @@ lib:
 poster:
 	make -C poster
 
+plots: build
+	./scripts/plots.sh
+
 rebuild: clean build
 
 rebuild-deep: clean-deep build
 
 test: build
-	valgrind ./bin/sfn/sfn -d bin/sfn/sfn.dot -n 10 -m 3 -T 10 -s 4 -k 100
+	valgrind ./bin/sfn/sfn -d bin/sfn/sfn.dot -a bin/sfn/animation \
+	    -n 10 -m 3 -T 10 -s 4 -k 100
 
 test-graph: test
 	dot -T png -o bin/sfn/sfn.png bin/sfn/sfn.dot
-	eog bin/sfn/sfn.png
+	og bin/sfn/sfn.png
 
 .PHONY: all build clean clean-deep lib poster rebuild rebuild-deep test \
-		test-build
+		test-build plot
 

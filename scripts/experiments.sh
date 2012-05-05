@@ -4,6 +4,9 @@ set -o errexit
 set -o nounset
 
 readonly REPO="$(readlink -f -- "$(dirname -- "${0}")/..")"
+cd -- "${REPO}"
 
-PYTHONPATH="${REPO}/src/" python2 -m pyanim "${@}"
+make build
+
+python2 ./tools/experiments.py -t 20000 bin/sfn/sfn results/results.npy
 
