@@ -9,6 +9,15 @@
 
 #define SFN_PROG_NAME "sfn"
 
+#define COLOUR_HOME "green"
+#define COLOUR_HOME_UNVISITED "white"
+#define COLOUR_HOME_VISITED "grey"
+#define COLOUR_NEIGHBOUR "red"
+#define COLOUR_NEIGHBOUR_VISITED "plum1"
+#define COLOUR_N_NEIGHBOUR "powderblue"
+#define COLOUR_N_NEIGHBOUR_VISITED "powderblue"
+#define COLOUR_HIT "yellow"
+
 typedef struct _sfn_node_t
 {
     size_t id;
@@ -186,40 +195,114 @@ static double calculate_clustering_coefficient(
         sfn_t const *const sfn)
 {
     double cc = 0.0;
-
-    for (int i = 0; i < sfn->num_nodes; ++i)
+    bool *const neighbours_visited = malloc(sizeof(bool) * sfn->max_nodes);
+    if (neighbours_visited == NULL)
     {
+        goto error;
+    }
+
+    for (size_t i = 0; i < sfn->num_nodes; ++i)
+    {
+        for (size_t j= 0; j < sfn->num_nodes; ++j)
+        {
+            neighbours_visited[j] = false;
+        }
         sfn_node_t const *const node = &sfn->nodes[i];
+        sfn_anim("C %lu %s\nF\n", node->id, COLOUR_HOME);
 
         int const k = node->degree;
 
         if (k < 2)
         {
+            sfn_anim("C %lu %s\n", node->id, COLOUR_HOME_VISITED);
             continue;
         }
 
         int e = 0;
 
-        for (int j = 0; j < k; ++j)
+        for (size_t j = 0; j < k; ++j)
         {
             sfn_node_t const *const neighbour = node->neighbours[j];
 
-            for (int n = 0; n < neighbour->degree; ++n)
+            sfn_anim("C %lu %s\nF\n", neighbour->id, COLOUR_NEIGHBOUR);
+
+            for (size_t n = 0; n < neighbour->degree; ++n)
             {
                 sfn_node_t const *const n_neighbour = neighbour->neighbours[n];
+
+                if (n_neighbour->id == node->id)
+                {
+                    continue;
+                }
 
                 if (sfn->adjacency[node->id * sfn->max_nodes + n_neighbour->id])
                 {
                     e += 1;
+                    sfn_anim("C %lu %s\nF\n", n_neighbour->id, COLOUR_HIT);
+                }
+                else
+                {
+                    sfn_anim("C %lu %s\nF\n", n_neighbour->id, COLOUR_N_NEIGHBOUR);
+                    sfn_anim("C %lu %s\n",
+                            n_neighbour->id, COLOUR_N_NEIGHBOUR_VISITED);
                 }
             }
+
+            for (size_t n = 0; n < neighbour->degree; ++n)
+            {
+                sfn_node_t const *const n_neighbour = neighbour->neighbours[n];
+                size_t id = n_neighbour->id;
+                if (id == node->id)
+                {
+                    continue;
+                }
+                if (neighbours_visited[id])
+                {
+                    sfn_anim("C %lu %s\n", id, COLOUR_NEIGHBOUR_VISITED);
+                }
+                else
+                {
+                    if (n_neighbour->id <= i)
+                    {
+                        sfn_anim("C %lu %s\n", id, COLOUR_HOME_VISITED);
+                    }
+                    else
+                    {
+                        sfn_anim("C %lu %s\n", id, COLOUR_HOME_UNVISITED);
+                    }
+                }
+            }
+
+            neighbours_visited[neighbour->id] = true;
+            sfn_anim("C %lu %s\n", neighbour->id, COLOUR_NEIGHBOUR_VISITED);
+
         }
+
+        for (size_t j = 0; j < node->degree; ++j)
+        {
+            sfn_node_t const *const neighbour = node->neighbours[j];
+            if (neighbour->id <= i)
+            {
+                sfn_anim("C %lu %s\n", neighbour->id, COLOUR_HOME_VISITED);
+            }
+            else
+            {
+                sfn_anim("C %lu %s\n", neighbour->id, COLOUR_HOME_UNVISITED);
+            }
+        }
+
+        sfn_anim("C %lu %s\n", node->id, COLOUR_HOME_VISITED);
 
         double const local_cc = (double)e / (double)(k * (k - 1));
         cc += local_cc;
     }
 
+    free(neighbours_visited);
     return cc / (double)sfn->num_nodes;
+
+error:
+    free(neighbours_visited);
+    return -1.0;
 }
 
 
@@ -430,8 +513,13 @@ int main(
 
     double const approx_cc = approximate_clustering_coefficient(sfn,
             num_samples);
-    double const real_cc = calculate_clustering_coefficient(sfn);
-
+    double real_cc;
+    if ((real_cc = calculate_clustering_coefficient(sfn)) < 0.0)
+    {
+        fprintf(stderr, "[ERROR] Insufficient memory for calc coeff.\n");
+        exit_code = EXIT_FAILURE;
+        goto exit;
+    }
     printf("CC\t%.100f\n", approx_cc);
     printf("ACC\t%.100f\n", real_cc);
 
