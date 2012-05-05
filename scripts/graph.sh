@@ -8,7 +8,7 @@ cd -- "${PROJ}"
 
 make build
 
-./bin/sfn -d /tmp/sfn.dot "${@}"
+./bin/sfn/sfn -d /tmp/sfn.dot "${@}"
 dot -T png -o /tmp/sfn.png /tmp/sfn.dot
 eog /tmp/sfn.png
 
