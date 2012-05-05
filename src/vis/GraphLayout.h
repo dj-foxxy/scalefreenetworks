@@ -11,6 +11,9 @@
 struct State
 {
   float m_damping;
+  float m_kinetic_energy;
+  float m_time_step;
+  float m_convergence;
 };
 
 struct Spring
@@ -24,10 +27,10 @@ public:
     static bool step(Graph * p_graph, State * &state, float time_step);
 
 private:
-    static float coulomb_repulsion( GraphNode* p_this_node, 
+    static Vector3f coulomb_repulsion( GraphNode* p_this_node, 
     				    GraphNode * p_other_node);
-    static float hooke_attraction(  GraphNode* p_this_node,
-				    Spring * p_spring);
+    static Vector3f hooke_attraction(  GraphNode* p_this_node,
+				    GraphNode * p_adj_node);
 };
 
 #endif

@@ -1,11 +1,43 @@
 #include "GraphLayout.h"
 
+#include <iostream>
+
+#define CONSTANT 4.0
+
 State * GraphLayout::generateLayout(Graph * p_graph, float damping)
 {
   State * state = new State();
   state->m_damping = damping;
-  srand ( time(NULL) );
+  state->m_kinetic_energy = 0.0f;
+  state->m_convergence	  = 0.5f;
+  state->m_time_step 	  = 0.1f;
+  srand ( time(NULL) ); 
   
+  int * x = new int[p_graph->m_nodes.size()], 
+      * y = new int[p_graph->m_nodes.size()], 
+      * z = new int[p_graph->m_nodes.size()];
+  
+  int j = 0;
+  while(j < p_graph->m_nodes.size()-1)
+  {
+    for (int _x = 0; _x < 1000 && j < p_graph->m_nodes.size(); _x++)
+    {
+      for(int _y = 0; _y < 1000 && j < p_graph->m_nodes.size(); _y++)
+      {
+        for(int _z = 0; _z < 1000 && j < p_graph->m_nodes.size(); _z++)
+	{
+	  x[j] = _x; y[j] = _y; z[j] = _z;
+	  
+	  if(p_graph->m_nodes.size() < 2000)
+	  {
+	    x[j] = rand() % 1000;
+	    y[j] = rand() % 1000;
+	  }
+	  j++;
+	}
+      }
+    }
+  }
   for(int i = 0; i < p_graph->m_nodes.size(); i++)
   {
     GraphNode * this_node = p_graph->m_nodes[i];
@@ -16,42 +48,81 @@ State * GraphLayout::generateLayout(Graph * p_graph, float damping)
     
     double jitter = 1000.0 / (double)(rand () % 1000);
     
-    this_node->m_position.X = rand() % ( 1000 )
-			     + jitter / (double)(2 + rand() % 4);
-    this_node->m_position.Y = rand() % ( 1000 )
-			     + jitter / (double)(2 + rand() % 4);
-    this_node->m_position.Z = rand() %  ( 1000 )
-			     + jitter / (double)(2 + rand() % 4);
+    this_node->m_position.X = x[i];
+    this_node->m_position.Y = y[i];
+    this_node->m_position.Z = z[i];
   }
+  delete [] x;
+  delete [] y;
+  delete [] z;
+  
+  
+  
+  return state;
 }
 
 bool GraphLayout::step(Graph * p_graph, State * &state, float time_step)
 {
-  if(true) return false;
-  
   float damping = state->m_damping;
   float total_kinetic_energy = 0.0f;
+  time_step = 0.1;
   
   for(int i = 0; i < p_graph->m_nodes.size(); i++)
   {
     Vector3f net_force;
     GraphNode * this_node = p_graph->m_nodes[i];
     
+    
     for(int j = 0; j < p_graph->m_nodes.size(); j++)
     {
       if(j != i)
       {
-	//net_force += coulomb_repulsion( this_node,
-	  //  				p_graph->m_nodes[j]);
+	net_force += coulomb_repulsion( this_node,
+	    				p_graph->m_nodes[j]);
       }
     }    
+    for(int j = 0; j < this_node->m_adjacent.size(); j++)
+    {
+      net_force += hooke_attraction( this_node, this_node->m_adjacent[j] );
+    }
     
-    //For each spring connected to this node
-    //net force += hooke_attraction( this_node, spring )
-    
-  //  this_node->m_velocity = 
-	//(this_node->m_velocity + time_step * net_force) * damping;
-    
+    float speed = this_node->m_velocity.magnitute();
+    this_node->m_velocity = 
+	(this_node->m_velocity + net_force * time_step) * damping;
+    this_node->m_position += this_node->m_velocity * time_step;
+    total_kinetic_energy += (speed * speed);
   }  
-  return false;
+  
+  state->m_kinetic_energy = total_kinetic_energy;
+  
+  return total_kinetic_energy > state->m_convergence || total_kinetic_energy == 0.0;
+}
+
+Vector3f GraphLayout::coulomb_repulsion( GraphNode* p_this_node, 
+        		  GraphNode * p_other_node)
+{
+  float q1q2 = CONSTANT;
+  
+  float k = CONSTANT;
+  Vector3f d_ij = p_this_node->m_position - p_other_node->m_position;
+  float d_ij_mag = d_ij.magnitute();
+  
+  d_ij.normalise();
+  
+  float scalar = k * (q1q2 / (d_ij_mag*d_ij_mag));
+  return d_ij * scalar;
+}
+
+Vector3f GraphLayout::hooke_attraction( GraphNode* p_this_node,
+				    GraphNode * p_adj_node)
+{
+  float k = CONSTANT;
+  float r = CONSTANT;
+  Vector3f d_ij = p_this_node->m_position - p_adj_node->m_position;
+  float d_ij_mag = d_ij.magnitute();
+  
+  d_ij.normalise();
+  float scalar = (-k * (d_ij_mag - r));
+  
+  return d_ij * scalar;
 }
