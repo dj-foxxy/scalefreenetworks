@@ -13,17 +13,21 @@ implementor to keep track of this.
 Commands
 --------
 
-**I [num]**
-Add the initial **[num]** nodes. The IDs of these nodes are
-0, ..., **[num]** - 1. Use **[num]** to initialise **n**.
+    I [num]
 
-**R [i] [j]**
-Add an initial random link between the **[i]**th and **[j]**th node.
+Add the initial [num] nodes. The IDs of these nodes are
+0, ..., [num] - 1. Use [num] to initialise **n**.
 
-**A**
-Add a new node, its ID is **n**. Remember to increment **n** after assigning the
+    R [i] [j]
+
+Add an initial random link between the [i]th and [j]th node.
+
+    A
+
+Add a new node, its ID is n. Remember to increment **n** after assigning the
 ID to the new node.
 
-**L [i] [j]**
-Add a new link between the **[i]**th and **[j]**th node.
+    L [i] [j]
+
+Add a new link between the [i]th and [j]th node.
 
