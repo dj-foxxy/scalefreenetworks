@@ -233,13 +233,11 @@ double approximate_clustering_coefficient(sfn_t const *const sfn,
         int const num_samples)
 {
     double current_clustering_coefficient = 0.0;
-    int skips = 0;
     for (int k = 0; k < num_samples; ++k)
     {
         sfn_node_t const j = sfn->nodes[get_random_index(sfn->num_nodes - 1)];
         if (j.degree < 2)
         {
-            skips++;
             continue;
         }
         sfn_node_t const u = *j.neighbours[get_random_index(j.degree -1)];
@@ -253,8 +251,7 @@ double approximate_clustering_coefficient(sfn_t const *const sfn,
             current_clustering_coefficient += 1.0;
         }
     }
-    return current_clustering_coefficient
-            / ((double) num_samples - (double) skips);
+    return current_clustering_coefficient / (double) num_samples;
 }
 
 bool sfn_write_dot_file(sfn_t const *const sfn, char const *const path)
@@ -397,8 +394,8 @@ int main(
     int const time_steps = arg_time_steps->ival[0];
     int const num_samples = arg_num_samples->ival[0];
 
-    if (init_num_nodes < 1 || time_steps < 0 || num_links > init_num_nodes ||
-            init_link_prob > 1 || init_link_prob <= 0)
+    if (init_num_nodes < 1 || time_steps <= 0 || num_links > init_num_nodes
+            || init_link_prob > 1 || init_link_prob <= 0 || num_links <= 0)
     {
         fprintf(stderr, "Invalid arguments.\n");
         exit_code = EXIT_FAILURE;
