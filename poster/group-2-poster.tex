@@ -1,18 +1,110 @@
-\documentclass[landscape, a0paper]{baposter}
+\documentclass[landscape,a1paper, fontscale=0.285]{baposter}
+\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
+\usepackage{graphicx}
+\usepackage{palatino}
 \begin{document}
-\begin{poster}{}
+\definecolor{lightblue}{rgb}{0.145,0.6666,1}
+\begin{poster}
+    % Poster options
+    {
+        background=plain,
+        bgColorOne=white,
+        bgColorTwo=white,
+        borderColor=lightblue,
+        headerColorOne=black,
+        headerColorTwo=lightblue,
+        headerFontColor=white,
+        boxColorOne=white,
+        boxColorTwo=lightblue,
+        eyecatcher=true,
+        headerborder=closed,
+        headerheight=0.2\textheight,
+      headerborder=closed,
+      textfont={\setlength{\parindent}{1.5em}}
+    }
 {
     Eye catcher
 }
 {
-    Calculating clustering
+    \LARGE Computing the Clustering Coefficient in Scale-free Networks
 }
 {
-    The boys
+    Yegor Guskov, Lloyd Henning, Jacobus Meulen, Peter Sutton\\
+    {\small\tt\{guskov9, henninl8, meulen9, suttonp8\}@cs.man.ac.uk}
 }
 {
-    Manchetser UNI
+    \includegraphics[height=3.0em]{images/logo}
 }
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Content begins
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\headerbox{Problem}{name=problem,column=0,row=0}
+{
+    The degrees of nodes in Scale-free networks follow a power-law distribution.
+}
+\headerbox{Exact algorithm}{name=exact-algorithm,
+below=problem,column=0,span=1}
+{
+    \begin{algorithm}[H]
+        \KwIn{A graph $G = (V, E)$, with $N$ nodes}
+        \KwOut{The clustering coefficient $C$, for $G$}
+        $c \gets 0$\\
+        \For{$i \in V$}
+        {
+            $d \gets i.degree$\\
+            $e \gets 0$\\
+            \For{$j \in i.neighbours$}
+            {
+                \For{$k \in j.neighbours$}
+                {
+                    \If {$i\mathtt{isneighbour}\left(i,j\right)$}
+                    {
+                        $e \gets e + 1$
+                    }
+                }
+            }
+            $c \gets \frac{e}{d\left(d-1\right)}$
+        }
+        \KwRet{$\frac{c}{N}$}
+        \caption{NODECOUNT}
+    \end{algorithm}
+}
+\headerbox{Approximation Algorithm}{name=approximation-algorithm,
+below=problem, column=1, row=1}
+{
+    \begin{algorithm}[H]
+        \KwIn{Integer $k$ and a graph $G = \left(V,E\right)$ with $N$ nodes}
+        \KwOut{An approximation of the clustering coefficient $C$ of $G$}
+        $c \gets 0$\\
+        \For{$i \in k$}
+        {
+        $j \gets\mathtt{UniformRandomNode}\left(\right)$\\
+        $u \gets\mathtt{UnifromRandomNeighbour}\left(j\right)$\\
+        \Repeat{$u \neq v$}
+        {
+            $v \gets \mathtt{UniformRandomNeighbour}\left(u\right)$\\
+        }
+        \If{$\mathtt{EdgeExists}\left(i, v\right)$}
+        {
+            $c \gets c + 1$\\
+        }
+    }
+        \KwRet{$\frac{c}{k}$}
+        \caption{Schank-Wagner}
+    \end{algorithm}
+}
+\headerbox{References}{name=references, column=0, above=bottom}
+{
+    \small
+    \bibliographystyle{ieee}
+    \begin{thebibliography}{1}
+        \bibitem{Schank05:approximatingclustering}
+            T. Schank, D. Wagner.
+            \newblock {Approximating clustering coefficient and
+                        transitivity}
+                        \newblock In {Journal of Graph Algorithms and
+                        Applications, 2005, volume 9, page 2005}
+    \end{thebibliography}
+}
 \end{poster}
 \end{document}
