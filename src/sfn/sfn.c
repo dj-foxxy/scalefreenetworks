@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/time.h>
 
 #include <argtable2.h>
 
@@ -242,7 +243,8 @@ static double calculate_clustering_coefficient(
                 }
                 else
                 {
-                    sfn_anim("C %lu %s\nF\n", n_neighbour->id, COLOUR_N_NEIGHBOUR);
+                    sfn_anim("C %lu %s\nF\n", n_neighbour->id,
+                            COLOUR_N_NEIGHBOUR);
                     sfn_anim("C %lu %s\n",
                             n_neighbour->id, COLOUR_N_NEIGHBOUR_VISITED);
                 }
@@ -511,17 +513,32 @@ int main(
     sfn_init(sfn, init_num_nodes, init_link_prob);
     sfn_ba(sfn, num_links, time_steps);
 
+
+    struct timeval before, after;
+    double d1;
+    gettimeofday(&before, NULL);
     double const approx_cc = approximate_clustering_coefficient(sfn,
             num_samples);
-    double real_cc;
+    gettimeofday(&after, NULL);
+    d1 = (after.tv_sec - before.tv_sec) * 1000.0
+            + (after.tv_usec - before.tv_usec) / 1000.0;
+
+    double real_cc, d2;
+    gettimeofday(&before, NULL);
     if ((real_cc = calculate_clustering_coefficient(sfn)) < 0.0)
     {
         fprintf(stderr, "[ERROR] Insufficient memory for calc coeff.\n");
         exit_code = EXIT_FAILURE;
         goto exit;
     }
-    printf("CC\t%.100f\n", approx_cc);
-    printf("ACC\t%.100f\n", real_cc);
+    gettimeofday(&after, NULL);
+    d2 = (after.tv_sec - before.tv_sec) * 1000.0
+            + (after.tv_usec - before.tv_usec) / 1000.0;
+
+    printf("ACC\t%.100f\n", approx_cc);
+    printf("ACCT\t%.100f\n", d1);
+    printf("CC\t%.100f\n", real_cc);
+    printf("CCT\t%.100f\n", d2);
 
     if (arg_dot_path->count > 0)
     {
