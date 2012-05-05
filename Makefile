@@ -1,4 +1,4 @@
-all: build
+all: build poster
 
 build: lib
 	make -C src/
@@ -13,6 +13,9 @@ clean-deep: clean
 lib:
 	make -C lib
 
+poster:
+	make -C poster
+
 rebuild: clean build
 
 rebuild-deep: clean-deep build
@@ -22,5 +25,5 @@ test: build
 	dot -T png -o bin/sfn/sfn.png bin/sfn/sfn.dot
 	eog bin/sfn/sfn.png
 
-.PHONY: all build clean clean-deep lib rebuild rebuild-deep test
+.PHONY: all build clean clean-deep lib poster rebuild rebuild-deep test
 
