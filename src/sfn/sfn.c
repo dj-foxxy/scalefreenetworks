@@ -1,3 +1,5 @@
+#define _BSD_SOURCE
+
 #include <assert.h>
 #include <math.h>
 #include <stdarg.h>
@@ -354,7 +356,7 @@ bool sfn_write_dot_file(sfn_t const *const sfn, char const *const path)
     }
     for (int i = 0; i < sfn->num_nodes; ++i)
     {
-        if (fprintf(dot_file, "%lu;", sfn->nodes[i].id) < 0)
+        if (fprintf(dot_file, "%zu;", sfn->nodes[i].id) < 0)
         {
             success = false;
             goto error;
@@ -366,7 +368,7 @@ bool sfn_write_dot_file(sfn_t const *const sfn, char const *const path)
         {
             if (sfn->nodes[i].neighbours[j]->id > i)
             {
-                if(fprintf(dot_file, "%lu--%lu;", i,
+                if(fprintf(dot_file, "%zu--%zu;", i,
                     sfn->nodes[i].neighbours[j]->id) < 0)
                 {
                     success = false;
@@ -394,6 +396,52 @@ void sfn_free(
     free(sfn->nodes);
     free(sfn);
 }
+
+/*
+Read from the edges file and populate the scale free 
+network with nodes and edges.
+*/
+static int sfn_edges_init(sfn_t *const sfn, char const *const path)
+{
+    FILE *edges = fopen(path, "r");
+
+    if (edges == NULL)
+    {
+        fprintf(stderr, "[ERROR] Cannot open edges file path.\n");
+        return 1;
+    }
+
+    /*
+    String buffer that contains an edge from a number to a number.
+    */
+    char edge[80];
+
+    /*
+    Node number that the edge specifies.
+    */
+    size_t node;
+    size_t node_friend;
+
+    /*
+    Ignore the first line of the file that contains the number
+    of heroes total.
+    */
+    fgets(edge, 80, edges);
+
+    while(fgets(edge, 80, edges) != NULL)
+    {
+        sscanf(edge, "%zd %zd", &node, &node_friend);
+
+        if (! sfn->adjacency[node * sfn->max_nodes + node_friend])
+        {
+            sfn_add_link(sfn, node, node_friend);
+        }
+    }
+
+    fclose(edges);
+    return 0;
+}
+
 
 int main(
     int const argc,
@@ -439,11 +487,14 @@ int main(
     struct arg_str *arg_anim_path = arg_strn("a", NULL, "<path>", 0, 1,
             "Path to write the animation scipt (stdout default).");
 
+    struct arg_str *arg_edges_path = arg_strn("e", NULL, "<path>", 0, 1,
+            "Path to read an edges file from.");
+
     struct arg_end *end = arg_end(10);
 
     void *arg_table[] = { arg_init_num_nodes, arg_init_link_prob,
                     arg_num_links, arg_time_steps, arg_dot_path, arg_seed,
-                    arg_num_samples, arg_anim_path, end };
+                    arg_num_samples, arg_anim_path, arg_edges_path, end };
 
     int exit_code = EXIT_SUCCESS;
 
@@ -503,15 +554,61 @@ int main(
         }
     }
 
-    if ((sfn = sfn_alloc(init_num_nodes, num_links, time_steps)) == NULL)
-    {
-        fprintf(stderr, "[ERROR] Insufficient memory for sfn.\n");
-        exit_code = EXIT_FAILURE;
-        goto exit;
-    }
 
-    sfn_init(sfn, init_num_nodes, init_link_prob);
-    sfn_ba(sfn, num_links, time_steps);
+    if (arg_edges_path->count > 0)
+    {
+        FILE *edges;
+        if ((edges = fopen(arg_edges_path->sval[0], "r")) == NULL)
+        {
+            fprintf(stderr, "[ERROR} Cannot open edges file path.");
+            exit_code = EXIT_FAILURE;
+            goto exit;
+        }
+
+        /*
+        String buffer that contains the result of the bash command execution.
+        */
+
+        char number_of_nodes[80];
+
+        /*
+        Number of nodes to allocate the data structure
+        for the scale free network with.
+        */
+        int num_nodes = atoi(fgets(number_of_nodes, 80, edges));
+
+        fclose(edges);
+
+        /*
+        Allocate space for the scale free network data structure.
+        */
+        if ((sfn = sfn_alloc(num_nodes, 0, 0)) == NULL)
+        {
+            fprintf(stderr, "[ERROR] Insufficient memory for sfn.\n");
+            exit_code = EXIT_FAILURE;
+            goto exit;
+        }
+        sfn->num_nodes = num_nodes;
+
+        if (sfn_edges_init(sfn, arg_edges_path->sval[0]) != 0)
+        {
+            fprintf(stderr, "[ERROR] Failed at populating the network with edges.\n");
+            exit_code = EXIT_FAILURE;
+            goto exit;
+        }
+    }
+    else
+    {
+      if ((sfn = sfn_alloc(init_num_nodes, num_links, time_steps)) == NULL)
+      {
+          fprintf(stderr, "[ERROR] Insufficient memory for sfn.\n");
+          exit_code = EXIT_FAILURE;
+          goto exit;
+      }
+
+      sfn_init(sfn, init_num_nodes, init_link_prob);
+      sfn_ba(sfn, num_links, time_steps);
+    }
 
 
     struct timeval before, after;
