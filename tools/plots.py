@@ -26,7 +26,7 @@ rc('font', family='serif')
 
 def plot_cc(r, output):
     plt.clf()
-    plt.semilogy(r[:,2] + r[0, 0], r[:,8], 'b-', label='Actual')
+    plt.semilogy(r[:,2] + r[0, 0], r[:,8], 'b-', label='Exact')
     plt.semilogy(r[:,2] + r[0, 0], r[:,6], 'r-', label='Approx.')
     plt.autoscale(tight=True)
     plt.legend()
@@ -42,7 +42,7 @@ def plot_cc(r, output):
 
 def plot_time(r, output):
     plt.clf()
-    plt.semilogy(r[:,2] + r[0, 0], r[:,9], 'b-', label='Actual')
+    plt.semilogy(r[:,2] + r[0, 0], r[:,9], 'b-', label='Exact')
     plt.semilogy(r[:,2] + r[0, 0], r[:,7], 'r-', label='Approx.')
     plt.autoscale(tight=True)
     plt.legend(loc='upper left')

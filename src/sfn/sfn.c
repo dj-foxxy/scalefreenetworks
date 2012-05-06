@@ -300,6 +300,7 @@ static double calculate_clustering_coefficient(
         double const local_cc = (double)e / (double)(k * (k - 1));
         cc += local_cc;
     }
+    sfn_anim("F\n");
 
     free(neighbours_visited);
     return cc / (double)sfn->num_nodes;
@@ -319,26 +320,56 @@ int get_random_index(int max)
 double approximate_clustering_coefficient(sfn_t const *const sfn,
         int const num_samples)
 {
-    double current_clustering_coefficient = 0.0;
+    sfn_anim("F\n");
+
+    double cc = 0.0;
+
     for (int k = 0; k < num_samples; ++k)
     {
-        sfn_node_t const j = sfn->nodes[get_random_index(sfn->num_nodes - 1)];
-        if (j.degree < 2)
+        sfn_node_t const *const i =
+                &sfn->nodes[get_random_index(sfn->num_nodes - 1)];
+
+        if (i->degree < 2)
         {
             continue;
         }
-        sfn_node_t const u = *j.neighbours[get_random_index(j.degree -1)];
-        sfn_node_t v;
+
+        sfn_node_t const *const j =
+            i->neighbours[get_random_index(i->degree - 1)];
+
+        sfn_node_t const *n;
+
         do
         {
-            v = *j.neighbours[get_random_index(j.degree - 1)];
-        } while (u.id == v.id);
-        if (sfn->adjacency[u.id * sfn->max_nodes + v.id])
+            n = i->neighbours[get_random_index(i->degree - 1)];
+        } while (j->id == n->id);
+
+        if (sfn->adjacency[j->id * sfn->max_nodes + n->id])
         {
-            current_clustering_coefficient += 1.0;
+            cc += 1.0;
+            sfn_anim("C %zu green\nC %zu green\nC %zu green\n",
+                    i->id, j->id, n->id);
+            sfn_anim("E %zu %zu green\nE %zu %zu green\nE %zu %zu green\nF\n",
+                    i->id, j->id, i->id, n->id, j->id, n->id);
+            sfn_anim("C %zu white\nC %zu white\nC %zu white\n",
+                    i->id, j->id, n->id);
+            sfn_anim("E %zu %zu black\nE %zu %zu black\nE %zu %zu black\n",
+                    i->id, j->id, i->id, n->id, j->id, n->id);
+        }
+        else
+        {
+            sfn_anim("C %zu red\nC %zu red\nC %zu red\n",
+                    i->id, j->id, n->id);
+            sfn_anim("E %zu %zu red\nE %zu %zu red\nF\n",
+                    i->id, j->id, i->id, n->id);
+            sfn_anim("C %zu white\nC %zu white\nC %zu white\n",
+                    i->id, j->id, n->id);
+            sfn_anim("E %zu %zu black\nE %zu %zu black\n",
+                    i->id, j->id, i->id, n->id);
         }
     }
-    return current_clustering_coefficient / (double) num_samples;
+
+    return cc / (double)num_samples;
 }
 
 bool sfn_write_dot_file(sfn_t const *const sfn, char const *const path)
@@ -398,7 +429,7 @@ void sfn_free(
 }
 
 /*
-Read from the edges file and populate the scale free 
+Read from the edges file and populate the scale free
 network with nodes and edges.
 */
 static int sfn_edges_init(sfn_t *const sfn, char const *const path)

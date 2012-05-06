@@ -8,11 +8,10 @@ cd -- "${REPO}"
 
 make build
 
-anim=/tmp/animation
+anim=animation
 rm -fr "${anim}"
 mkdir "${anim}"
-./bin/sfn/sfn -n 2 -T 10 -m 2 -a "${anim}/animation"
+./bin/sfn/sfn -n 2 -T 10 -m 2 -k 10 -a "${anim}/animation"
 cat "${anim}/animation"
 PYTHONPATH=src/ python2 -m pyanim "${anim}/animation" "${anim}"
-eog ${anim}/0.png
 

@@ -1,4 +1,4 @@
-all: build poster
+all: build poster/images/cc.eps poster/images/time.eps poster
 
 build: lib
 	make -C src/
@@ -9,6 +9,7 @@ clean:
 
 clean-deep: clean
 	make -C lib/ clean
+	rm -f poster/images/cc.eps poster/images/time.eps
 
 lib:
 	make -C lib
@@ -16,8 +17,9 @@ lib:
 poster:
 	make -C poster
 
-plots: build
-	./scripts/plots.sh
+poster/images/cc.eps poster/images/time.eps: tools/plots.py results/results.npy
+	python2 tools/plots.py -c poster/images/cc.eps -t poster/images/time.eps \
+			results/results.npy
 
 rebuild: clean build
 
