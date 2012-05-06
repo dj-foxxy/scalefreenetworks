@@ -14,10 +14,9 @@ clean:
 
 $(BIN)/vis: $(BIN) $(OBJS)
 	g++ $(LIBFLAGS) $(OGL_CFLAGS) -o $@ $(OBJS) $(LDFLAGS) $(OGL_LDFLAGS)
-	rm -f *.o
 
 $(BIN):
 	mkdir -p $@
 
-.PHONY: all build
+.PHONY: all build clean
 
