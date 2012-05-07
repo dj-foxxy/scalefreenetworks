@@ -461,7 +461,7 @@ static int sfn_edges_init(sfn_t *const sfn, char const *const path)
 
     while(fgets(edge, 80, edges) != NULL)
     {
-        sscanf(edge, "%zd %zd", &node, &node_friend);
+        sscanf(edge, "%zd\t%zd", &node, &node_friend);
 
         if (! sfn->adjacency[node * sfn->max_nodes + node_friend])
         {
@@ -521,11 +521,18 @@ int main(
     struct arg_str *arg_edges_path = arg_strn("e", NULL, "<path>", 0, 1,
             "Path to read an edges file from.");
 
+    struct arg_lit *arg_real = arg_lit0("R", NULL,
+            "Run only deterministic algorithm.");
+
+    struct arg_lit *arg_approx = arg_lit0("A", NULL, 
+            "Run only heuristic algorithm.");
+
     struct arg_end *end = arg_end(10);
 
     void *arg_table[] = { arg_init_num_nodes, arg_init_link_prob,
                     arg_num_links, arg_time_steps, arg_dot_path, arg_seed,
-                    arg_num_samples, arg_anim_path, arg_edges_path, end };
+                    arg_num_samples, arg_anim_path, arg_edges_path, arg_real,
+                    arg_approx, end };
 
     int exit_code = EXIT_SUCCESS;
 
@@ -588,6 +595,10 @@ int main(
 
     if (arg_edges_path->count > 0)
     {
+        /*
+        Read graph edges from a text file.
+        */
+
         FILE *edges;
         if ((edges = fopen(arg_edges_path->sval[0], "r")) == NULL)
         {
@@ -641,32 +652,36 @@ int main(
       sfn_ba(sfn, num_links, time_steps);
     }
 
-
     struct timeval before, after;
-    double d1;
-    gettimeofday(&before, NULL);
-    double const approx_cc = approximate_clustering_coefficient(sfn,
-            num_samples);
-    gettimeofday(&after, NULL);
-    d1 = (after.tv_sec - before.tv_sec) * 1000.0
-            + (after.tv_usec - before.tv_usec) / 1000.0;
-
-    double real_cc, d2;
-    gettimeofday(&before, NULL);
-    if ((real_cc = calculate_clustering_coefficient(sfn)) < 0.0)
+    if (! arg_real->count > 0)
     {
-        fprintf(stderr, "[ERROR] Insufficient memory for calc coeff.\n");
-        exit_code = EXIT_FAILURE;
-        goto exit;
+      gettimeofday(&before, NULL);
+      double d1;
+      double const approx_cc = approximate_clustering_coefficient(sfn,
+                num_samples);
+      gettimeofday(&after, NULL);
+      d1 = (after.tv_sec - before.tv_sec) * 1000.0
+              + (after.tv_usec - before.tv_usec) / 1000.0;
+      printf("ACC\t%.100f\n", approx_cc);
+      printf("ACCT\t%.100f\n", d1);
     }
-    gettimeofday(&after, NULL);
-    d2 = (after.tv_sec - before.tv_sec) * 1000.0
-            + (after.tv_usec - before.tv_usec) / 1000.0;
 
-    printf("ACC\t%.100f\n", approx_cc);
-    printf("ACCT\t%.100f\n", d1);
-    printf("CC\t%.100f\n", real_cc);
-    printf("CCT\t%.100f\n", d2);
+    if (! arg_approx->count > 0)
+    {
+      double real_cc, d2;
+      gettimeofday(&before, NULL);
+      if ((real_cc = calculate_clustering_coefficient(sfn)) < 0.0)
+      {
+          fprintf(stderr, "[ERROR] Insufficient memory for calc coeff.\n");
+          exit_code = EXIT_FAILURE;
+          goto exit;
+      }
+      gettimeofday(&after, NULL);
+      d2 = (after.tv_sec - before.tv_sec) * 1000.0
+              + (after.tv_usec - before.tv_usec) / 1000.0;
+      printf("CC\t%.100f\n", real_cc);
+      printf("CCT\t%.100f\n", d2);
+    }
 
     if (arg_dot_path->count > 0)
     {
