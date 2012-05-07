@@ -26,28 +26,28 @@ rc('font', family='serif')
 
 def plot_cc(r, output):
     plt.clf()
-    plt.semilogy(r[:,2] + r[0, 0], r[:,8], 'b-', label='Exact')
-    plt.semilogy(r[:,2] + r[0, 0], r[:,6], 'r-', label='Approx.')
+    plt.semilogy(r[:,2] + r[0, 0], r[:,8], 'b-', label='NODE-ITERATOR')
+    plt.semilogy(r[:,2] + r[0, 0], r[:,6], 'r-', label='Schank-Wagner')
     plt.autoscale(tight=True)
     plt.legend()
-    plt.title(r'Network size versus Clustering coefficient '
-              r'($n_0 = %d ,\; m = %d ,\; \epsilon = %3g$).'
+    plt.title(r'Network size versus clustering coefficient '
+              r'($n_0 = %d ,\; m = %d ,\; \epsilon = %3g$)'
               % (r[0,0], r[0,1], r[0,3]))
     plt.xlabel('Nodes')
     plt.ylabel('Clustering coefficient')
     if output == '-':
         plt.show()
     else:
-        plt.savefig(output)
+        plt.savefig(output, bbox_inches='tight', transparent=True)
 
 def plot_time(r, output):
     plt.clf()
-    plt.semilogy(r[:,2] + r[0, 0], r[:,9], 'b-', label='Exact')
-    plt.semilogy(r[:,2] + r[0, 0], r[:,7], 'r-', label='Approx.')
+    plt.semilogy(r[:,2] + r[0, 0], r[:,9], 'b-', label='NODE-ITERATOR')
+    plt.semilogy(r[:,2] + r[0, 0], r[:,7], 'r-', label='Schank-Wagner')
     plt.autoscale(tight=True)
-    plt.legend(loc='upper left')
+    plt.legend(loc='lower right')
     plt.title(r'Network size versus execution time '
-              r'($n_0 = %d ,\; m = %d ,\; \epsilon = %3g$).'
+              r'($n_0 = %d ,\; m = %d ,\; \epsilon = %3g$)'
               % (r[0,0], r[0,1], r[0,3]))
     plt.xlabel('Nodes')
     plt.ylabel('Execution time (ms)')
@@ -55,7 +55,7 @@ def plot_time(r, output):
     if output == '-':
         plt.show()
     else:
-        plt.savefig(output)
+        plt.savefig(output, bbox_inches='tight', transparent=True)
 
 def build_argument_parser():
     ap = ArgumentParser()

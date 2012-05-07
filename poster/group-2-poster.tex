@@ -12,7 +12,6 @@
 \usepackage{subcaption}
 \usepackage{palatino}
 \usetikzlibrary{shapes,arrows,positioning,calc}
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Save space in lists. Use this after the opening of the list
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -53,8 +52,8 @@
     280/210/blue/0.3/modok/240/4em,
     210/140/blue/0.25/doom/180/4em,
     140/110/blue/0.2/ironman/120/2.5em,
-    110/100/blue/0.15/hulk/100/2em,
-    100/90/blue/0.1/thing/95/1em}
+    110/100/blue/0.15/hulk/105/1em,
+    100/90/blue/0.1/thing/95/0.5em}
 {
 \filldraw[fill=\xcolour,draw=black, fill opacity=\xopacity](0:0cm) -- (\x:1cm)
 arc (\x:\y:1cm) -- cycle;
@@ -71,10 +70,11 @@ arc (\x:\y:1cm) -- cycle;
             \centering
         \begin{algorithm}[H]
             \SetAlgoLined
-            \KwIn{Integer $k$ and a graph $G = \left(V,E\right)$ with $N$ nodes}
-            \KwOut{An approximation of the clustering coefficient $C$ of $G$}
+            \DontPrintSemicolon
+            \KwIn{An integer $k$ and a network $N = \left(V,E\right)$ of $n$ nodes}
+            \KwOut{An approximation of the clustering coefficient $\hat{C}_{N}$}
             $c \gets 0$\\
-            \For{$i \in k$}
+            \For{$i \gets 0$ $\mathbf{to}$ $k$}
             {
             $j \gets\mathtt{\small UniformRandomNode}\left(\right)$\\
             $u \gets\mathtt{\small UnifromRandomNeighbour}\left(j\right)$\\
@@ -99,18 +99,18 @@ arc (\x:\y:1cm) -- cycle;
         \centering
 \begin{algorithm}[H]
 \SetAlgoLined
-                \KwIn{A graph $G = (V, E)$, with $N$ nodes}
-                \KwOut{The clustering coefficient $C$, for $G$}
+                \KwIn{A network $N = (V, E)$, with $n$ nodes}
+                \KwOut{The clustering coefficient $C_{N}$}
                 $c \gets 0$\\
                 \For{$i \in V$}
                 {
-                    $d \gets i.degree$\\
+                    $d \gets i.\mathrm{degree}$\\
                     $e \gets 0$\\
-                    \For{$j \in i.neighbours$}
+                    \For{$j \in i.\mathrm{neighbours}$}
                     {
-                        \For{$k \in j.neighbours$}
+                        \For{$k \in j.\mathrm{neighbours}$}
                         {
-                            \If {$i\mathtt{isneighbour}\left(i,j\right)$}
+                            \If {$\mathtt{IsNeighbour}\left(i,j\right)$}
                             {
                                 $e \gets e + 1$
                             }
@@ -118,7 +118,7 @@ arc (\x:\y:1cm) -- cycle;
                     }
                     $c \gets e / \left(d\left(d-1\right)\right)$
                 }%
-                \KwRet{$c / N $}%
+                \KwRet{$c / n $}%
                 \caption{NODE-ITERATOR}%
             \end{algorithm}%
         \end{minipage}%
@@ -139,7 +139,7 @@ arc (\x:\y:1cm) -- cycle;
         boxColorTwo=lightblue,
         eyecatcher=true,
         headerborder=closed,
-        headerheight=0.13\textheight,
+        headerheight=0.11\textheight,
       headerborder=closed,
       textfont={\setlength{\parindent}{1.5em}}
     }
@@ -159,59 +159,55 @@ arc (\x:\y:1cm) -- cycle;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Content begins
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\headerbox{Problem}{name=problem,column=0,row=0}
+\headerbox{Introduction}{name=problem,column=0,row=0}
 {
-    \lettrine{W}{e} present methods of computing the clustering coefficient of a
-    Scale-free network to measure how clustered the nodes are.
+    \lettrine{W}{e} present methods for computing the clustering coefficient of a
+    scale-free network.
 
 }
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \headerbox{Clustering Coefficient}{name=clustering, column=0, below=problem}
 {
-    \lettrine{G}{iven} a network $N = \left(V, E\right)$ and links $\left(u, v\right),
+    \lettrine{G}{iven} a network $N = \left(V, E\right)$  of $n$ nodes with links $\left(u, v\right),
     \left(v, w\right) \in E$, the clustering coefficient $C_{N}$ gives the
-    probability of there existing $\left(u, w\right) \in E$.
+    likeliness of $\left(u, w\right) \in E$.
 
-    Intuitively, we can understand it as: ``If Spiderman has appeared in the
+    Intuitively, it answers the question,``If Spiderman has appeared in the
     same comic as Wolverine and Wolverine has appeared in the same comic as
-    M.O.D.O.K., what is the probability that Spiderman and M.O.D.O.K. have
-    appeared in the same comic?''.
+    M.O.D.O.K., how likely is it that Spiderman and M.O.D.O.K. have
+    appeared in the same comic?''.\\
     \clustertriangle
+    \vspace{0.5em}
     We define $C_{N}$ as
     \[
-        C_{N} = \frac{1}{N} \displaystyle\sum_{i \in
-        N}{2\frac{e}{k_{i}\left(k_{i} -1\right)}}
+        C_{N} = \frac{1}{n} \displaystyle\sum_{i}
+            {\frac{2e_{i}}{k_{i}\left(k_{i} -1\right)}}
     \]
-    Where $k$ is the number of neighbours of the $i^{th}$ node and $e$ is the
-    number of links shared between them.
+    where $k_{i}$ is the number of neighbours of the $i$th node and $e_{i}$ is
+    the number of links shared between the neighbours of the $i$th node.
+    \vspace{-0.5em}
 }
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\headerbox{BA model}{name=bamodel, column=1, row=0}
+\headerbox{Barab\'{a}si-Albert model}{name=bamodel, column=1, row=0}
 {
-    \lettrine{S}{cale}-free networks can be emulated using the
-    Barab\'{a}si-Albert (BA) model which grows the network through the addition
-    of new nodes and preferring to attach new nodes old nodes with the highest
-    degrees.
+    \lettrine{T}{he} Barab\'{a}si-Albert (BA) model is a model of scale-free networks.
+    Networks are grown by adding new nodes with links established between them
+    by \emph{preferential attachment}.
 
-    The steps to generate a BA model are as follows
-    \begin{enumerate}
-    \compresslist
-    \item
-    Start with a random network $N$ composed of a small number of nodes.
-    \item
-        For each timestep $t \leq T$ add a new node $n$ to the graph and links
-        $\left(n, i\right)$ where $i$ has degree $k_{i}$ and is selected from the
-        existing nodes with probability
-        \[
+    To generate a BA model, we start with an initial network $N$ of
+    $n_{0}$ nodes. Then for each timestep $t \leq T$ we add a new node $u$ to
+    the graph and links $\left(u, i\right)$ where $i$ has degree $k_{i}$ and is
+    selected from the existing nodes with probability
+    \[
         \Pi\left(k_{i}\right) =
-        \frac{k_{i}}{\displaystyle\sum_{j}{k_{j}}}
+        \frac{k_{i}}{\displaystyle\sum_{j}{k_{j}}}.
     \]
-    \end{enumerate}
-
-    \emph{Preferential attachment} is best seen as a ``roulette wheel'', where
-    the nodes with greater degrees have more ``slots'' to land in.\\
-
+    Preferential attachment is best seen as a roulette wheel, where
+    the size of the slots is proportional to the degree of the associated node.\\
     \noindent\roulette
+    \captionof{figure}{A visualisation of preferential attachment where
+        Spiderman has the greatest degree and therefore is the most likely to be
+    \emph{attached} to new nodes.}
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -221,50 +217,52 @@ arc (\x:\y:1cm) -- cycle;
         \begin{minipage}[t]{1\textwidth}
     \begin{minipage}[t]{0.49\textwidth}
         \includegraphics[height=15em]{images/cc.eps}
-        \captionof{subfigure}[a]{\footnotesize Clustering coefficient}
+        \captionof{figure}[a]{Clustering coefficient}
     \end{minipage}
     \null
     \hfill
     \null
     \begin{minipage}[t]{0.49\textwidth}
         \includegraphics[height=15em]{images/time.eps}
-        \captionof{subfigure}[b]{\footnotesize Execution time}
+        \captionof{figure}[b]{Execution time}
     \end{minipage}
     \hfill
     \null
-    \captionof{figure}{\footnotesize Plots showing the performance of the
-        exact NODE-ITERATOR and the approximate Schank-Wagner algorithms on
-        networks generated by the BA model.}
     \end{minipage}
 \end{center}
 }
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\headerbox{Polynomial vs. Sublinear approaches}{name=exact-algorithm,
+\headerbox{Polynomial and Sublinear Approaches}{name=exact-algorithm,
 below=results ,column=2,span=2}
 {
+    \lettrine{T}{he} algorithms below compute the clustering coefficient $C_{N}$
+    of a network $N$. Algorithm 1 computes $C_{N}$ exactly and Algorithm 2
+    computes an approximation.
+
     \vspace{-1em}
     \null\hspace{-1em}
     \iterator\hspace{1em}
     \approximation
-    \null\hfill\\
-    \captionof{figure}{\footnotesize For a network of $n$ nodes, with $k_{max}$ as the
-    largest degree of node, NODE-ITERATOR is $\mathcal{O}\left(nd^{2}\right)$
-    and Schank-Wagner is $\mathcal{O}\left(k\right)$ where $k =
-    \left(ln\left(2n\right)/2\epsilon^{2}\right)$ and $\epsilon$ is the error
-        tolerated.}
-    \label{cc-algorithms}%
+    \null\hfill\\\\
+    For a network of $n$ nodes, such that the greatest node degree is $d$, the
+    time complexity of NODE-ITERATOR and Schank-Wagner is
+    $\mathcal{O}\left(nd^{2}\right)$ and $\mathcal{O}\left(k\right)$
+    respectively, where $k = \left\lceil
+    \ln\left(2n\right)/2\epsilon^{2}\right\rceil$ and $\epsilon$ is the error
+    bound.
 }
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \headerbox{References}{name=references, column=0, below=clustering, above=bottom}
 {
     \tiny
     \bibliographystyle{ieee}
-    \renewcommand\refname{\vskip -0.5em}
+    \renewcommand\refname{\vskip -0.7em}
     \begin{thebibliography}{1}
         \bibitem{Albert01:statisticalmechanics}
             R. Z. Albert and A. Barab\'{a}si
             \newblock{Statistical Mechanics Of Complex Networks},
             \newblock In {Reviews of Modern Physics, 2002, volume 74, page 47}
+            \vspace{-1.7em}
         \bibitem{Schank05:approximatingclustering}
             T. Schank, D. Wagner.
             \newblock {Approximating clustering coefficient and

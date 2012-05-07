@@ -12,6 +12,5 @@ _build:
 $(BIN):
 	mkdir -p $@
 
-
 .PHONY: build _build
 
