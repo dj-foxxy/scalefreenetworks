@@ -283,7 +283,7 @@ int main(int argc, char ** argv)
   AdjacencyList * list;
   
   
-  m_animation = Animation::Read("animation/animation");
+  m_animation = Animation::Read("animation/real.anim");
   
   
   
@@ -307,7 +307,7 @@ int main(int argc, char ** argv)
     if(m_blah)
     {
       std::cout << "BLAH" << std::endl;
-      list = myReader.readGraph("bin/egdes");
+      list = myReader.readGraph("animation/edges");
       std::cout << "BLAH" << std::endl;
       m_graph = GraphFactory::createGraph(list);
       std::cout << "BLAH" << std::endl;
