@@ -36,7 +36,9 @@ Graph * GraphFactory::createGraph(AdjacencyList * p_adj_list)
     /* At this point we're guaranteed to have the correct references */
     orig_node->m_adjacent.push_back(dest_node);
     dest_node->m_adjacent.push_back(orig_node);
-  }  
+  }
     
+  graph->m_size = graph->m_nodes.size();
+  
   return graph;
 }

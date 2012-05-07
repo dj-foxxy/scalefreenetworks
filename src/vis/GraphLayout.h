@@ -7,6 +7,7 @@
 #include <time.h>
 
 #include "Graph.h"
+#include "Loader.h"
 
 struct State
 {

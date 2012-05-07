@@ -10,6 +10,9 @@ struct Graph
 {
   std::map<std::string, int> m_index_map;
   std::vector<GraphNode*> m_nodes;
+  int m_size;
+  
+  int * m_x, * m_y, * m_z;
 };
 
 #endif

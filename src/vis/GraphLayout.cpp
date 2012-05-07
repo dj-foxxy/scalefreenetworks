@@ -2,42 +2,60 @@
 
 #include <iostream>
 
-#define CONSTANT 4.0
+#define CONSTANT 0.05
 
 State * GraphLayout::generateLayout(Graph * p_graph, float damping)
 {
   State * state = new State();
-  state->m_damping = damping;
+  state->m_damping = 0.2;//damping;
   state->m_kinetic_energy = 0.0f;
   state->m_convergence	  = 0.5f;
-  state->m_time_step 	  = 0.1f;
+  state->m_time_step 	  = 0.01f;
   srand ( time(NULL) ); 
   
-  int * x = new int[p_graph->m_nodes.size()], 
-      * y = new int[p_graph->m_nodes.size()], 
-      * z = new int[p_graph->m_nodes.size()];
+  int range = 250;
+  int total = range * range * range;
+  
+  int * x = new int[total], 
+      * y = new int[total], 
+      * z = new int[total];
   
   int j = 0;
-  while(j < p_graph->m_nodes.size()-1)
+  for (int _x = 0; _x < range; _x++)
   {
-    for (int _x = 0; _x < 1000 && j < p_graph->m_nodes.size(); _x++)
+    for(int _y = 0; _y < range; _y++)
     {
-      for(int _y = 0; _y < 1000 && j < p_graph->m_nodes.size(); _y++)
+      for(int _z = 0; _z < range; _z++)
       {
-        for(int _z = 0; _z < 1000 && j < p_graph->m_nodes.size(); _z++)
-	{
-	  x[j] = _x; y[j] = _y; z[j] = _z;
-	  
-	  if(p_graph->m_nodes.size() < 2000)
-	  {
-	    x[j] = rand() % 1000;
-	    y[j] = rand() % 1000;
-	  }
-	  j++;
-	}
+        x[j] = _x; y[j] = _y; z[j] = _z;
+        j++;
+	
+	//Loader::SetProgress( ((double)j / (double)total)/2.0 );
       }
     }
   }
+  
+  Loader::SetProgress(0.5f);
+  /* Randomly Distribute Nodes */
+  for(int i = 0; i < total; i++)
+  {
+    int _x, _y, _z; int rnd = rand() % (total);
+    
+    _x = x[i];
+    _y = y[i];
+    _z = z[i];
+    
+    x[i] = x[rnd];
+    y[i] = y[rnd];
+    z[i] = z[rnd];
+    
+    x[rnd] = _x;
+    y[rnd] = _y;
+    z[rnd] = _z;
+    
+   // Loader::SetProgress(10.0 + ((double)i / (double)total)/2.0);
+  }  
+  
   for(int i = 0; i < p_graph->m_nodes.size(); i++)
   {
     GraphNode * this_node = p_graph->m_nodes[i];
@@ -52,11 +70,11 @@ State * GraphLayout::generateLayout(Graph * p_graph, float damping)
     this_node->m_position.Y = y[i];
     this_node->m_position.Z = z[i];
   }
-  delete [] x;
-  delete [] y;
-  delete [] z;
+  std::cout << std::endl;
   
-  
+  p_graph->m_x = x;
+  p_graph->m_y = y;
+  p_graph->m_z = z;
   
   return state;
 }
@@ -95,7 +113,7 @@ bool GraphLayout::step(Graph * p_graph, State * &state, float time_step)
   
   state->m_kinetic_energy = total_kinetic_energy;
   
-  return total_kinetic_energy > state->m_convergence || total_kinetic_energy == 0.0;
+  return total_kinetic_energy > state->m_convergence;
 }
 
 Vector3f GraphLayout::coulomb_repulsion( GraphNode* p_this_node, 

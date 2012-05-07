@@ -14,12 +14,14 @@ private:
   GLfloat  centerx, centery, centerz; /* Look point               */
   static const int WIN_HEIGHT = 1280;
   static const int WIN_WIDTH  = 1024;
+  bool m_next_state;
   
   Camera();
   
 public:
   static Camera * get();
   
+  bool NextState(void);
   void init(void);
   void calculate_lookpoint(void);
   void update(void);

@@ -7,7 +7,7 @@
 #define TURN_ANGLE 4.0
 #define DEG_TO_RAD 0.017453293
 
-Camera::Camera(void)
+Camera::Camera(void) : m_next_state(false)
 {
 }
 
@@ -15,6 +15,16 @@ Camera * Camera::get(void)
 {
   static Camera instance;
   return &instance;
+}
+
+bool Camera::NextState(void)
+{
+  if(m_next_state)
+  {
+    m_next_state = false;
+    return true;
+  }
+  return false;
 }
 
 void Camera::init(void)
@@ -64,6 +74,9 @@ void Camera::keyboard(unsigned char key, int x, int y) {
   GLfloat rad;//To be used by several methods
   
   switch (key) { 
+    case 'N':
+      m_next_state = true;
+      break;
     case ',': /*Comma Key*/
       rad = (lon+mlon+90) * DEG_TO_RAD;
       eyex += RUN_SPEED * sin(rad);
