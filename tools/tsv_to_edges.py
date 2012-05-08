@@ -26,4 +26,4 @@ for issue, issue_heroes in issues.items():
   for hero in issue_heroes:
     for hero_friend in issue_heroes:
       if (hero != hero_friend):
-        print("%d %d" % (hero, hero_friend))
+        print("%d\t%d" % (hero, hero_friend))

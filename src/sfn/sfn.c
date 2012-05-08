@@ -227,7 +227,12 @@ static double calculate_clustering_coefficient(
         {
             sfn_node_t const *const neighbour = node->neighbours[j];
 
-            sfn_anim("C %lu %s\nF\n", neighbour->id, COLOUR_NEIGHBOUR);
+            sfn_anim("C %lu %s\nE %zu %zu %s\nF\n", 
+                    neighbour->id, 
+                    COLOUR_NEIGHBOUR,
+                    node->id,
+                    neighbour->id,
+                    COLOUR_NEIGHBOUR);
 
             for (size_t n = 0; n < neighbour->degree; ++n)
             {
@@ -241,11 +246,27 @@ static double calculate_clustering_coefficient(
                 if (sfn->adjacency[node->id * sfn->max_nodes + n_neighbour->id])
                 {
                     e += 1;
-                    sfn_anim("C %lu %s\nF\n", n_neighbour->id, COLOUR_HIT);
+                    sfn_anim("C %lu %s\nE %zu %zu %s\nE %zu %zu %s\n"
+                            "E %zu %zu %s\nF\n", 
+                            n_neighbour->id, 
+                            COLOUR_HIT,
+                            neighbour->id,
+                            n_neighbour->id,
+                            COLOUR_HIT,
+                            node->id,
+                            n_neighbour->id,
+                            COLOUR_HIT,
+                            node->id,
+                            neighbour->id,
+                            COLOUR_HIT);
                 }
                 else
                 {
-                    sfn_anim("C %lu %s\nF\n", n_neighbour->id,
+                    sfn_anim("C %lu %s\nE %zu %zu %s\nF\n", 
+                            n_neighbour->id,
+                            COLOUR_N_NEIGHBOUR,
+                            neighbour->id,
+                            n_neighbour->id,
                             COLOUR_N_NEIGHBOUR);
                     sfn_anim("C %lu %s\n",
                             n_neighbour->id, COLOUR_N_NEIGHBOUR_VISITED);

@@ -14,6 +14,8 @@
 #include "Camera.h"
 #include "Animation.h"
 
+#define DELAY 50
+
 const int WIN_HEIGHT = 1024;
 const int WIN_WIDTH  = 1280;
 
@@ -21,9 +23,9 @@ bool pre_defined_graph = false;
 Graph 	  * m_graph;
 State 	  * m_state;
 Animation * m_animation;
-bool    m_stepping;
+bool    m_stepping = false;
 float   m_last_update;
-bool    m_show_edges = true;
+bool    m_show_edges = false;
 bool    m_has_animation = true;
 
 std::vector<Anim_State*> m_current_color_states;
@@ -245,7 +247,7 @@ void Display()
   
     Camera::get()->update();
     
-    if(!pre_defined_graph && current_time - m_last_update > 250)
+    if(!pre_defined_graph && current_time - m_last_update > DELAY)
     {
       NextAnimation(m_graph, m_animation);
       m_last_update = current_time;
@@ -287,7 +289,7 @@ int main(int argc, char ** argv)
   AdjacencyList * list;
   
   
-  m_animation = Animation::Read("animation/real.anim");
+  m_animation = Animation::Read("bin/animation/real.anim");
   
   
   
@@ -311,7 +313,7 @@ int main(int argc, char ** argv)
     if(m_blah)
     {
       std::cout << "BLAH" << std::endl;
-      list = myReader.readGraph("animation/edges");
+      list = myReader.readGraph("bin/animation/edges");
       std::cout << "BLAH" << std::endl;
       m_graph = GraphFactory::createGraph(list);
       std::cout << "BLAH" << std::endl;
@@ -349,7 +351,6 @@ int main(int argc, char ** argv)
   std::cout << "OpenGL Initialised... Starting Simulation" << std::endl;
   
   m_last_update = GetTimeMillis();
-  m_stepping = true;
   
   glutMainLoop();
   
