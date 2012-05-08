@@ -18,23 +18,23 @@ Anim_State * Animation::nextState()
 RGB * Animation::ColorToRGB(std::string p_color)
 {
   if(p_color == "red")
-    return new RGB(255,50,10);
+    return new RGB(255,0,0);
   if(p_color == "white")
-    return new RGB(255,255,255);
+    return new RGB(0,235,215);
   if(p_color == "black")
     return new RGB(100,100,100);
   if(p_color == "green")
     return new RGB(0,255,0);
   if(p_color == "powderblue")
-    return new RGB(100,100,255);
+    return new RGB(176,224,230);
   if(p_color == "plum1")
-    return new RGB(100,50,150);
+    return new RGB(221,160,221);
   if(p_color == "grey")
-    return new RGB(100,150,150);
+    return new RGB(100,100,100);
   if(p_color == "yellow")
-    return new RGB(170,0,170);
+    return new RGB(255,255,0);
   
-  return new RGB(255,255,0);
+  return new RGB(250,235,215);
 }
 
 Animation * Animation::Read(std::string p_file)
@@ -78,8 +78,10 @@ Animation * Animation::Read(std::string p_file)
       Anim_State * color_state = new Anim_State(COLOR);
       std::string color;
       in >> color_state->m_node >> color;
-      color_state->m_node_color = ColorToRGB(color);
+      RGB * rgb = ColorToRGB(color);
+      color_state->m_node_color = rgb;
       state_vector->push_back(*color_state);
+      rgb = state_vector->at( state_vector->size() - 1 ).m_node_color;
     }
     else if( 'F' == buffer )
       state_vector->push_back(Anim_State(FRAME));

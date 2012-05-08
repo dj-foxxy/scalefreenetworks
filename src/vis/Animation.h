@@ -20,10 +20,10 @@ enum Action
 struct RGB
 {
   RGB() : R(0), G(0), B(0) {}
-  RGB(char r, char g, char b) : R(r), G(g), B(b) {}
-  char R;
-  char G;
-  char B;
+  RGB(int r, int g, int b) : R(r), G(g), B(b) {}
+  int R;
+  int G;
+  int B;
 };
 
 struct Anim_State

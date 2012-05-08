@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#define CONSTANT 0.05
+#define CONSTANT 1.0
 
 State * GraphLayout::generateLayout(Graph * p_graph, float damping)
 {
@@ -83,8 +83,7 @@ bool GraphLayout::step(Graph * p_graph, State * &state, float time_step)
 {
   float damping = state->m_damping;
   float total_kinetic_energy = 0.0f;
-  time_step = 0.1;
-  
+  time_step = state->m_time_step;
   for(int i = 0; i < p_graph->m_nodes.size(); i++)
   {
     Vector3f net_force;
@@ -113,7 +112,7 @@ bool GraphLayout::step(Graph * p_graph, State * &state, float time_step)
   
   state->m_kinetic_energy = total_kinetic_energy;
   
-  return total_kinetic_energy > state->m_convergence;
+  return total_kinetic_energy > state->m_convergence || total_kinetic_energy == 0.0f;
 }
 
 Vector3f GraphLayout::coulomb_repulsion( GraphNode* p_this_node, 

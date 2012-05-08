@@ -22,12 +22,12 @@ Graph 	  * m_graph;
 State 	  * m_state;
 Animation * m_animation;
 bool    m_stepping;
-float   m_last_frame;
+float   m_last_update;
 bool    m_show_edges = true;
 bool    m_has_animation = true;
 
-std::vector<Anim_State> m_current_color_states;
-std::vector<Anim_State> m_current_edge_states;
+std::vector<Anim_State*> m_current_color_states;
+std::vector<Anim_State*> m_current_edge_states;
 
 long GetTimeMillis()
 {
@@ -48,7 +48,7 @@ void RenderEdge(GraphNode * p_origin, GraphNode * p_destination)
   RGB * color = NULL;
   for(int i = 0; i < m_current_edge_states.size(); i++)
   {
-     Anim_State * anim_state = &m_current_edge_states[i];
+     Anim_State * anim_state = m_current_edge_states[i];
      if(p_origin->m_name == anim_state->m_origin && p_destination->m_name == anim_state->m_destination
 	 || p_origin->m_name == anim_state->m_destination && p_destination->m_name == anim_state->m_origin)
      {
@@ -62,7 +62,8 @@ void RenderEdge(GraphNode * p_origin, GraphNode * p_destination)
   }
   else if(!m_show_edges)
     return;
-    
+  else
+    glColor3f( 0.3,0.2,1.0 );
   glBegin(GL_LINES);
     glVertex3f(p_origin->m_position.X,
 	       p_origin->m_position.Y,
@@ -119,20 +120,20 @@ void RenderText(std::string string, int x, int y)
 
 void RenderGraph(Graph * graph)
 {
-  long current_time = GetTimeMillis();
   if(m_stepping)
-    m_stepping = GraphLayout::step(graph, m_state,
-				   current_time - m_last_frame);
+    m_stepping = GraphLayout::step(graph, m_state,0.01f);
   
   for(int i = 0; i < graph->m_nodes.size(); i++)
   {
     RGB * color = NULL;
     for(int j = 0; j < m_current_color_states.size(); j++)
-      if(m_current_color_states[j].m_node == graph->m_nodes[i]->m_name)
-	color = m_current_color_states[j].m_node_color;
+      if(m_current_color_states[j]->m_node == graph->m_nodes[i]->m_name)
+	color = m_current_color_states[j]->m_node_color;
     
     if(color != NULL)
-      glColor3f((double)color->R, (double)color->G, (double)color->B);
+    {
+      glColor3f((double)color->R / 255.0, (double)color->G / 255.0, (double)color->B /255.0);
+    }
     else
       glColor3f(1.0,1.0,1.0);
     RenderNode(graph->m_nodes[i]);
@@ -148,7 +149,6 @@ void RenderGraph(Graph * graph)
   RenderText(oss.str(), 10, 250);
 //  RenderText("Hello2", 10, 280);
   
-  m_last_frame = current_time;
 }
 
 void NextAnimation(Graph * &p_graph, Animation * &anim)
@@ -218,7 +218,7 @@ void NextAnimation(Graph * &p_graph, Animation * &anim)
     }
     else if(anim_state->m_action == COLOR)
     {
-      m_current_color_states.push_back(*anim_state);
+      m_current_color_states.push_back(anim_state);
       /*
       std::cout << "Found Color State " << std::endl;
       Color_State * clr_state = reinterpret_cast<Color_State*>(anim_state);
@@ -232,20 +232,24 @@ void NextAnimation(Graph * &p_graph, Animation * &anim)
     }
     else if(anim_state->m_action == EDGE)
     {
-      m_current_edge_states.push_back(*anim_state);
+      m_current_edge_states.push_back(anim_state);
     }
   }
 }
 
 void Display()
 {
+  long current_time = GetTimeMillis();
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
   
     Camera::get()->update();
     
-    if(Camera::get()->NextState() && !pre_defined_graph)
+    if(!pre_defined_graph && current_time - m_last_update > 250)
+    {
       NextAnimation(m_graph, m_animation);
+      m_last_update = current_time;
+    }
 //    gluLookAt(300,300,300,
  // 	     -4000, -3000, 400,
 //	     0.0, 1.0, 0.0);
@@ -332,7 +336,7 @@ int main(int argc, char ** argv)
   glutReshapeFunc(Reshape);
   
   glEnable(GL_DEPTH_TEST);
-  glClearColor(.1, 0.5, 0.2, 1.0);
+  glClearColor(0.0, 0.0, 0.0, 1.0);
   Camera::get()->init();
   glPointSize(10.0f);
   
@@ -344,7 +348,7 @@ int main(int argc, char ** argv)
   /* */
   std::cout << "OpenGL Initialised... Starting Simulation" << std::endl;
   
-  m_last_frame = GetTimeMillis();
+  m_last_update = GetTimeMillis();
   m_stepping = true;
   
   glutMainLoop();
