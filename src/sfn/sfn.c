@@ -478,7 +478,13 @@ static int sfn_edges_init(sfn_t *const sfn, char const *const path)
     Ignore the first line of the file that contains the number
     of heroes total.
     */
-    fgets(edge, 80, edges);
+    char * fgets_result = fgets(edge, 80, edges);
+    
+    if( fgets_result == NULL )
+    {
+      fclose(edges);
+      return 0;
+    }
 
     while(fgets(edge, 80, edges) != NULL)
     {

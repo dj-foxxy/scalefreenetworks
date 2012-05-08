@@ -11,7 +11,7 @@ $(BIN):
 $(BIN)/sfn: sfn.c
 	gcc -Wall -Werror -g0 -O3 --std=c99 \
 		-I $(LIB)/argtable2-13/src -lm \
-		$(LIB)/argtable2-13/src/*.o $? -o $@
+		$(LIB)/argtable2-13/src/*.o $? -o $@ -lm 
 
 .PHONY: all build
 
